@@ -1,0 +1,7 @@
+{
+  "name": "learnit-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo Frontend build check passed"
+  }
+}

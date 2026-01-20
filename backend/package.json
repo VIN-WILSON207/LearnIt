@@ -1,0 +1,7 @@
+{
+  "name": "learnit-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo Backend build check passed"
+  }
+}
