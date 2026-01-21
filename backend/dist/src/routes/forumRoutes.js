@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const forumController_1 = require("../controllers/forumController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.post('/posts', auth_1.authenticate, forumController_1.createPost);
+router.get('/posts/:courseId', forumController_1.getPosts);
+router.post('/comments', auth_1.authenticate, forumController_1.addComment);
+exports.default = router;
