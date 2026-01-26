@@ -1,0 +1,279 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h2 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.createSection {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 40px;
+}
+
+.createSection h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.topicInput,
+.contentInput,
+.replyInput {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  transition: border-color 0.3s ease;
+}
+
+.topicInput:focus,
+.contentInput:focus,
+.replyInput:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.topicInput {
+  height: 45px;
+}
+
+.contentInput {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.replyInput {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.discussionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  color: var(--text-secondary);
+}
+
+.discussion {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 25px;
+  transition: all 0.3s ease;
+}
+
+.discussion:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+.discussionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.titleSection {
+  flex: 1;
+}
+
+.titleSection h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  word-break: break-word;
+}
+
+.role {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.role.instructor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role.student {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.role.admin {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.date {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.author {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.content {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.repliesSection {
+  border-top: 1px solid var(--border-color);
+  padding-top: 15px;
+}
+
+.repliesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.repliesHeader h5 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.toggleBtn:hover {
+  color: var(--primary-dark);
+}
+
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.reply {
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.replyMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.replyMeta strong {
+  color: var(--text-primary);
+}
+
+.replyRole {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.replyRole.instructor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.replyRole.student {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.replyDate {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.replyContent {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.addReply {
+  background: var(--bg-secondary);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .createSection {
+    padding: 20px;
+  }
+
+  .discussionHeader {
+    flex-direction: column;
+  }
+
+  .titleSection h4 {
+    font-size: 1.1rem;
+  }
+
+  .header h2 {
+    font-size: 1.5rem;
+  }
+}
