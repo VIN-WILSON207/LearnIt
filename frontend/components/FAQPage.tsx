@@ -82,7 +82,7 @@ const FAQPage: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Frequently Asked Questions</h1>
-        <p>Find answers to common questions about LearntIt</p>
+        <p>Find answers to common questions about LearnIt</p>
       </div>
 
       <div className={styles.content}>
@@ -95,9 +95,8 @@ const FAQPage: React.FC = () => {
                 .map(faq => (
                   <div
                     key={faq.id}
-                    className={`${styles.faqItem} ${
-                      expandedId === faq.id ? styles.expanded : ''
-                    }`}
+                    className={`${styles.faqItem} ${expandedId === faq.id ? styles.expanded : ''
+                      }`}
                   >
                     <button
                       className={styles.question}
@@ -121,8 +120,8 @@ const FAQPage: React.FC = () => {
       <div className={styles.supportSection}>
         <h3>Still have questions?</h3>
         <p>Contact our support team for assistance</p>
-        <a href="mailto:support@LearntIt.lk" className={styles.supportLink}>
-          support@LearntIt.lk
+        <a href="mailto:support@LearnIt.lk" className={styles.supportLink}>
+          support@LearnIt.lk
         </a>
       </div>
     </div>

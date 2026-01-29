@@ -12,13 +12,14 @@ export interface Subscription {
 export interface User {
   id: string;
   email: string;
-  password: string;
-  fullName?: string;
-  name?: string;
-  role: 'student' | 'professor' | 'instructor' | 'admin';
-  avatar?: string;
-  educationalLevel?: 'O/L' | 'A/L';
-  subscription?: Subscription;
+  name: string; // Changed from fullName to match backend
+  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'; // Uppercase to match Prisma enum
+  levelId?: string;
+  level?: {
+    id: string;
+    name: string;
+  };
+  subscription?: Subscription | null;
 }
 
 // Course types

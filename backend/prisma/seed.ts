@@ -69,7 +69,20 @@ async function main() {
         create: { name: 'Pro', price: 20, duration: 1 },
     });
 
-    console.log({ freePlan, basicPlan, proPlan });
+    // Student-discounted plans
+    const studentBasicPlan = await prisma.plan.upsert({
+        where: { name: 'Student Basic' },
+        update: {},
+        create: { name: 'Student Basic', price: 5, duration: 1 },
+    });
+
+    const studentProPlan = await prisma.plan.upsert({
+        where: { name: 'Student Pro' },
+        update: {},
+        create: { name: 'Student Pro', price: 10, duration: 1 },
+    });
+
+    console.log({ freePlan, basicPlan, proPlan, studentBasicPlan, studentProPlan });
     console.log('Seeding completed.');
 }
 

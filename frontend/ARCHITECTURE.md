@@ -1,10 +1,10 @@
-# LearntIt Architecture Overview
+# LearnIt Architecture Overview
 
 ## 🏗️ System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     LearntIt PLATFORM                        │
+│                     LearnIt PLATFORM                        │
 │              Smart Learning, Better Results                 │
 └─────────────────────────────────────────────────────────────┘
 
@@ -111,6 +111,7 @@
 ## 🔄 Data Flow
 
 ### User Login Flow
+
 ```
 ┌──────────────┐
 │ User Input   │
@@ -154,6 +155,7 @@
 ```
 
 ### Quiz Submission Flow
+
 ```
 ┌──────────────┐
 │ User Takes   │
@@ -220,6 +222,7 @@
 ```
 
 ### Subscription Upgrade Flow
+
 ```
 ┌──────────────┐
 │ User Views   │
@@ -365,7 +368,7 @@
                │ │      │
       ┌────────┼─┼──────┤
       │        │ │      │
-   /api/   /api/  /api/  .... 
+   /api/   /api/  /api/  ....
    auth    courses quizzes
 ```
 
@@ -565,7 +568,7 @@ User Notifications
 Authentication
 └─ User logged in?
 
-Authorization  
+Authorization
 └─ User has permission?
 
 Subscription

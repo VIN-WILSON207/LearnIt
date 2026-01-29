@@ -101,28 +101,26 @@
   font-size: 0.9rem;
 }
 
-.demoInfo {
-  background: var(--secondary);
-  padding: 1rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
+.footerLink {
+  margin-top: 20px;
+  text-align: center;
 }
 
-.demoInfo h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.95rem;
+.link {
+  font-size: 14px;
+  color: #555;
 }
 
-.demoInfo ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.link a {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.demoInfo li {
-  padding: 0.25rem 0;
-  color: var(--text-secondary);
+.link a:hover {
+  text-decoration: underline;
 }
+
 
 @media (max-width: 600px) {
   .header h1 {
