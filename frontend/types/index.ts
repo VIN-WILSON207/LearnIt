@@ -12,13 +12,21 @@ export interface Subscription {
 export interface User {
   id: string;
   email: string;
-  password: string;
+  password?: string; // Optional, not returned from backend
   fullName?: string;
-  name?: string;
-  role: 'student' | 'professor' | 'instructor' | 'admin';
+  name: string; // Required, from backend
+  role: 'student' | 'instructor' | 'admin'; // Normalized role (instructor = INSTRUCTOR)
   avatar?: string;
   educationalLevel?: 'O/L' | 'A/L';
   subscription?: Subscription;
+}
+
+// Backend User (raw response from API)
+export interface BackendUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'; // Uppercase from backend
 }
 
 // Course types
@@ -226,4 +234,49 @@ export interface ApiError {
   error: string;
   message?: string;
   status: number;
+}
+
+// Backend API Response Types
+export interface LoginResponse {
+  message: string;
+  token: string;
+  user: BackendUser;
+}
+
+export interface RegisterResponse {
+  message: string;
+  token: string;
+  user: BackendUser;
+}
+
+// Backend Course (raw response from API)
+export interface BackendCourse {
+  id: string;
+  title: string;
+  description: string | null;
+  subjectId: string;
+  instructorId: string;
+  isPublished: boolean;
+  createdAt: string;
+  subject?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  instructor?: {
+    name: string;
+  };
+  lessons?: BackendLesson[];
+}
+
+export interface BackendLesson {
+  id: string;
+  courseId: string;
+  title: string;
+  content: string | null;
+  videoUrl: string | null;
+  attachmentUrl: string | null;
+  orderNumber: number;
+  isFree: boolean;
+  createdAt: string;
 }

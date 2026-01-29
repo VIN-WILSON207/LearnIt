@@ -6,41 +6,102 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { mockCourses, mockEnrollments, mockCertificates } from '@/lib/mockData';
+import { getStudentEnrollments } from '@/lib/api/enrollments';
+import { getUserProgress } from '@/lib/api/progress';
+import { getCertificates } from '@/lib/api/certificates';
+import { getCourseById } from '@/lib/api/courses';
+import { Enrollment, Certificate, Progress, BackendCourse } from '@/types';
 import styles from './page.module.css';
 import { FiAward, FiClock, FiBook } from 'react-icons/fi';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<any[]>([]);
-  const [totalHours, setTotalHours] = useState(0);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [progressData, setProgressData] = useState<Progress[]>([]);
+  const [courses, setCourses] = useState<Record<string, BackendCourse>>({});
+  const [totalCourses, setTotalCourses] = useState(0);
   const [completedCourses, setCompletedCourses] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      // Get student enrollments
-      const studentEnrollments = mockEnrollments.filter(
-        (e) => e.studentId === user.id
-      );
-      setEnrollments(studentEnrollments);
+    const fetchData = async () => {
+      if (!user) return;
 
-      // Calculate stats
-      const hours = studentEnrollments.reduce((sum, e) => sum + e.hoursCompleted, 0);
-      setTotalHours(hours);
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Fetch all data in parallel
+        const [enrollmentsData, certificatesData, progressData] = await Promise.all([
+          getStudentEnrollments(user.id),
+          getCertificates(),
+          getUserProgress(),
+        ]);
 
-      const completed = studentEnrollments.filter(
-        (e) => e.status === 'completed'
-      ).length;
-      setCompletedCourses(completed);
+        setEnrollments(enrollmentsData);
+        setCertificates(certificatesData);
+        setProgressData(progressData);
 
-      // Get certificates
-      const studentCerts = mockCertificates.filter(
-        (c) => c.studentId === user.id
-      );
-      setCertificates(studentCerts);
-    }
+        // Fetch course details for enrollments
+        const coursePromises = enrollmentsData.map((enrollment) =>
+          getCourseById(enrollment.courseId).catch(() => null)
+        );
+        const courseResults = await Promise.all(coursePromises);
+        const coursesMap: Record<string, BackendCourse> = {};
+        courseResults.forEach((course, index) => {
+          if (course) {
+            coursesMap[enrollmentsData[index].courseId] = course;
+          }
+        });
+        setCourses(coursesMap);
+
+        // Calculate stats
+        setTotalCourses(enrollmentsData.length);
+        const completed = progressData.filter((p) => p.percent >= 100).length;
+        setCompletedCourses(completed);
+      } catch (err) {
+        console.error('Failed to fetch student data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [user]);
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="student">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <p>Loading dashboard...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole="student">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--error)' }}>
+            <p>{error}</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // Get progress for each enrollment
+  const getProgressForCourse = (courseId: string): number => {
+    const progress = progressData.find((p) => p.courseId === courseId);
+    return progress?.percent || 0;
+  };
 
   return (
     <ProtectedRoute requiredRole="student">
@@ -56,11 +117,11 @@ export default function StudentDashboard() {
           <Card className={styles.statCard}>
             <div className={styles.statContent}>
               <div className={styles.statIcon}>
-                <FiClock />
+                <FiBook />
               </div>
               <div>
-                <div className={styles.statLabel}>Learning Hours</div>
-                <div className={styles.statValue}>{totalHours}</div>
+                <div className={styles.statLabel}>Enrolled Courses</div>
+                <div className={styles.statValue}>{totalCourses}</div>
               </div>
             </div>
           </Card>
@@ -93,39 +154,45 @@ export default function StudentDashboard() {
         {/* In Progress Courses */}
         <div className={styles.section}>
           <h2>Your Courses</h2>
-          <div className={styles.coursesGrid}>
-            {enrollments.map((enrollment) => {
-              const course = mockCourses.find((c) => c.id === enrollment.courseId);
-              return (
-                <Card key={enrollment.id} className={styles.courseCard}>
-                  <img
-                    src={course?.image}
-                    alt={course?.title}
-                    className={styles.courseImage}
-                  />
-                  <h3>{course?.title}</h3>
-                  <p>{course?.description}</p>
-                  <div className={styles.courseProgress}>
-                    <div className={styles.progressLabel}>
-                      Progress: {enrollment.progress}%
+          {enrollments.length === 0 ? (
+            <Card>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                <p>You haven't enrolled in any courses yet. Browse courses to get started!</p>
+              </div>
+            </Card>
+          ) : (
+            <div className={styles.coursesGrid}>
+              {enrollments.map((enrollment) => {
+                const course = courses[enrollment.courseId];
+                const progress = getProgressForCourse(enrollment.courseId);
+                if (!course) return null;
+
+                return (
+                  <Card key={enrollment.id} className={styles.courseCard}>
+                    <h3>{course.title}</h3>
+                    <p>{course.description || 'No description'}</p>
+                    <div className={styles.courseProgress}>
+                      <div className={styles.progressLabel}>
+                        Progress: {progress}%
+                      </div>
+                      <div className={styles.progressBar}>
+                        <div
+                          className={styles.progressFill}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className={styles.progressBar}>
-                      <div
-                        className={styles.progressFill}
-                        style={{ width: `${enrollment.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <p className={styles.courseStats}>
-                    {enrollment.hoursCompleted} / {course?.hours} hours
-                  </p>
-                  <Button variant="primary" className={styles.courseBtn}>
-                    Continue Learning
-                  </Button>
-                </Card>
-              );
-            })}
-          </div>
+                    <p className={styles.courseStats}>
+                      Subject: {course.subject?.name || 'N/A'}
+                    </p>
+                    <Button variant="primary" className={styles.courseBtn}>
+                      Continue Learning
+                    </Button>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Certificates */}
@@ -134,16 +201,16 @@ export default function StudentDashboard() {
             <h2>Your Certificates</h2>
             <div className={styles.certificatesList}>
               {certificates.map((cert) => {
-                const course = mockCourses.find((c) => c.id === cert.courseId);
+                const course = courses[cert.courseId] || cert.course;
                 return (
                   <Card key={cert.id} className={styles.certCard}>
                     <div className={styles.certContent}>
                       <FiAward className={styles.certIcon} />
                       <div>
-                        <h3>{course?.title}</h3>
-                        <p>Issued: {cert.issueDate}</p>
+                        <h3>{course?.title || 'Course'}</h3>
+                        <p>Issued: {new Date(cert.issueDate).toLocaleDateString()}</p>
                         <p className={styles.certNumber}>
-                          Cert #: {cert.certificateNumber}
+                          Cert ID: {cert.id.substring(0, 8)}
                         </p>
                       </div>
                     </div>

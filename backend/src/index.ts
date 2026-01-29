@@ -9,9 +9,31 @@ import progressRoutes from './routes/progressRoutes';
 import certificateRoutes from './routes/certificateRoutes';
 import forumRoutes from './routes/forumRoutes';
 import supportRoutes from './routes/supportRoutes';
+import enrollmentRoutes from './routes/enrollmentRoutes';
+import userRoutes from './routes/userRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 import path from 'path';
 
 dotenv.config();
+
+// Validate required environment variables at startup
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+const optionalEnvVars = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.error(`❌ CRITICAL: Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+});
+
+// Warn about optional but recommended env vars
+optionalEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.warn(`⚠️  WARNING: Missing optional environment variable: ${envVar}`);
+    console.warn(`   File uploads will not work without Cloudinary credentials`);
+  }
+});
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -30,6 +52,9 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root route
 app.get('/', (req: Request, res: Response) => {

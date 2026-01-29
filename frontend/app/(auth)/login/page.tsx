@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
@@ -79,14 +80,9 @@ export default function Login() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            <div className={styles.demoInfo}>
-              <h3>Demo Credentials:</h3>
-              <ul>
-                <li><strong>Student:</strong> student@example.com / student123</li>
-                <li><strong>Professor:</strong> professor@example.com / professor123</li>
-                <li><strong>Admin:</strong> admin@example.com / admin123</li>
-              </ul>
-            </div>
+            <p className={styles.signupLink}>
+              Don't have an account? <Link href="/signup">Sign up</Link>
+            </p>
           </form>
         </Card>
       </div>

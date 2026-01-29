@@ -6,13 +6,73 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { mockAnalytics, mockUsers, mockCourses } from '@/lib/mockData';
+import { getPlatformAnalytics } from '@/lib/api/analytics';
+import { getAllUsers } from '@/lib/api/users';
+import { getAllCourses } from '@/lib/api/courses';
+import { normalizeRole } from '@/lib/apiClient';
+import { BackendUser, BackendCourse, PlatformAnalytics } from '@/types';
 import styles from './page.module.css';
 import { FiUsers, FiBook, FiTrendingUp, FiAward, FiTrash2, FiEdit2 } from 'react-icons/fi';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState(mockAnalytics);
+  const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
+  const [users, setUsers] = useState<BackendUser[]>([]);
+  const [courses, setCourses] = useState<BackendCourse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [analyticsData, usersData, coursesData] = await Promise.all([
+          getPlatformAnalytics(),
+          getAllUsers(),
+          getAllCourses(),
+        ]);
+        setAnalytics(analyticsData);
+        setUsers(usersData);
+        setCourses(coursesData);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="admin">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <p>Loading dashboard...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole="admin">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--error)' }}>
+            <p>{error}</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute requiredRole="admin">
@@ -24,79 +84,81 @@ export default function AdminDashboard() {
         </div>
 
         {/* Analytics Cards */}
-        <div className={styles.statsGrid}>
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiUsers />
+        {analytics && (
+          <div className={styles.statsGrid}>
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiUsers />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Total Users</div>
+                  <div className={styles.statValue}>{analytics.totalUsers}</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Total Users</div>
-                <div className={styles.statValue}>{analytics.totalUsers}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiUsers />
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiUsers />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Students</div>
+                  <div className={styles.statValue}>{analytics.totalStudents}</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Students</div>
-                <div className={styles.statValue}>{analytics.totalStudents}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiBook />
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiBook />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Total Courses</div>
+                  <div className={styles.statValue}>{analytics.totalCourses}</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Total Courses</div>
-                <div className={styles.statValue}>{analytics.totalCourses}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiAward />
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiAward />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Certificates</div>
+                  <div className={styles.statValue}>{analytics.certificatesIssued || 0}</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Certificates</div>
-                <div className={styles.statValue}>{analytics.certificatesIssued}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiTrendingUp />
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiTrendingUp />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Completion Rate</div>
+                  <div className={styles.statValue}>{analytics.averageCompletion}%</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Completion Rate</div>
-                <div className={styles.statValue}>{analytics.completionRate}%</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiTrendingUp />
+            <Card className={styles.statCard}>
+              <div className={styles.statContent}>
+                <div className={styles.statIcon}>
+                  <FiUsers />
+                </div>
+                <div>
+                  <div className={styles.statLabel}>Instructors</div>
+                  <div className={styles.statValue}>{analytics.totalInstructors}</div>
+                </div>
               </div>
-              <div>
-                <div className={styles.statLabel}>Avg Rating</div>
-                <div className={styles.statValue}>⭐ {analytics.averageRating}</div>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </div>
+        )}
 
         {/* User Management */}
         <div className={styles.section}>
@@ -117,27 +179,30 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockUsers.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.fullName}</td>
-                      <td>{u.email}</td>
-                      <td>
-                        <span className={`${styles.badge} ${styles[u.role]}`}>
-                          {u.role}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.actions}>
-                          <button className={styles.actionBtn} title="Edit">
-                            <FiEdit2 />
-                          </button>
-                          <button className={styles.actionBtn} title="Delete">
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {users.map((u) => {
+                    const normalizedRole = normalizeRole(u.role);
+                    return (
+                      <tr key={u.id}>
+                        <td>{u.name}</td>
+                        <td>{u.email}</td>
+                        <td>
+                          <span className={`${styles.badge} ${styles[normalizedRole]}`}>
+                            {normalizedRole}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={styles.actions}>
+                            <button className={styles.actionBtn} title="Edit">
+                              <FiEdit2 />
+                            </button>
+                            <button className={styles.actionBtn} title="Delete">
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -152,21 +217,21 @@ export default function AdminDashboard() {
           </div>
 
           <div className={styles.coursesList}>
-            {mockCourses.map((course) => (
+            {courses.map((course) => (
               <Card key={course.id} className={styles.courseItem}>
                 <div className={styles.courseHeader}>
                   <div>
                     <h3>{course.title}</h3>
-                    <p>{course.category}</p>
+                    <p>{course.subject?.name || 'No subject'}</p>
                   </div>
                   <div className={styles.courseStats}>
                     <div className={styles.stat}>
-                      <span className={styles.label}>Students:</span>
-                      <span className={styles.value}>{course.students}</span>
+                      <span className={styles.label}>Instructor:</span>
+                      <span className={styles.value}>{course.instructor?.name || 'Unknown'}</span>
                     </div>
                     <div className={styles.stat}>
-                      <span className={styles.label}>Rating:</span>
-                      <span className={styles.value}>⭐ {course.rating}</span>
+                      <span className={styles.label}>Status:</span>
+                      <span className={styles.value}>{course.isPublished ? 'Published' : 'Draft'}</span>
                     </div>
                   </div>
                 </div>
@@ -176,7 +241,7 @@ export default function AdminDashboard() {
                     View Details
                   </Button>
                   <Button variant="outline" size="small">
-                    Approve
+                    {course.isPublished ? 'Unpublish' : 'Publish'}
                   </Button>
                   <Button variant="danger" size="small">
                     Remove
@@ -191,25 +256,27 @@ export default function AdminDashboard() {
         <div className={styles.section}>
           <h2>Platform Analytics</h2>
           <div className={styles.analyticsGrid}>
-            <Card className={styles.analyticsCard}>
-              <h3>Learning Activity</h3>
-              <div className={styles.analyticsValue}>
-                {analytics.totalHours.toLocaleString()} hours
-              </div>
-              <p>Total learning hours on platform</p>
-            </Card>
+            {analytics && (
+              <>
+                <Card className={styles.analyticsCard}>
+                  <h3>Total Enrollments</h3>
+                  <div className={styles.analyticsValue}>{analytics.totalEnrollments}</div>
+                  <p>Students enrolled in courses</p>
+                </Card>
 
-            <Card className={styles.analyticsCard}>
-              <h3>Active Courses</h3>
-              <div className={styles.analyticsValue}>{analytics.activeCourses}</div>
-              <p>Out of {analytics.totalCourses} total courses</p>
-            </Card>
+                <Card className={styles.analyticsCard}>
+                  <h3>Active Users</h3>
+                  <div className={styles.analyticsValue}>{analytics.activeUsers}</div>
+                  <p>Users active in last 30 days</p>
+                </Card>
 
-            <Card className={styles.analyticsCard}>
-              <h3>Professors</h3>
-              <div className={styles.analyticsValue}>{analytics.totalInstructors}</div>
-              <p>Active course creators</p>
-            </Card>
+                <Card className={styles.analyticsCard}>
+                  <h3>Instructors</h3>
+                  <div className={styles.analyticsValue}>{analytics.totalInstructors}</div>
+                  <p>Active course creators</p>
+                </Card>
+              </>
+            )}
           </div>
         </div>
       </div>

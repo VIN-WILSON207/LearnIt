@@ -2,11 +2,13 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { handleError } from '../utils/errorHandler';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
 
 export const register = async (req: Request, res: Response) => {
     try {
+        console.log('Registration request body:', req.body);
         const { name, email, password, role, levelId } = req.body;
 
         if (!email || !password || !name) {
@@ -22,15 +24,20 @@ export const register = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        console.log('Creating user with data:', {
+            name,
+            email,
+            role: role || 'STUDENT',
+            levelId
+        });
+
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: role || 'STUDENT',
-                level: levelId
-                    ? { connect: { id: levelId } }
-                    : undefined,
+                levelId: levelId || null,
             },
         });
 
@@ -51,8 +58,7 @@ export const register = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Registration failed' });
+        handleError(error, res, 500, 'Registration failed');
     }
 };
 
@@ -89,6 +95,6 @@ export const login = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        res.status(500).json({ error: 'Login failed' });
+        handleError(error, res, 500, 'Login failed');
     }
 };
