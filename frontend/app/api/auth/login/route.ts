@@ -1,9 +1,9 @@
-import { mockUsers } from '@/lib/mockData';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -12,27 +12,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user in mock database
-    const user = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+    // Forward to backend
+    const backendResponse = await fetch('http://localhost:4000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (!user) {
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
+        { error: data.error || 'Login failed' },
+        { status: backendResponse.status }
       );
     }
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    
-    return NextResponse.json(
-      { user: userWithoutPassword },
-      { status: 200 }
-    );
+    return NextResponse.json(data, { status: 200 });
+
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login proxy error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

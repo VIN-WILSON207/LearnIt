@@ -1,19 +1,21 @@
-# LearntIt - Smart Learning, Better Results
+# LearnIt - Smart Learning, Better Results
 
 A comprehensive Learning Management System (LMS) designed for O/L and A/L ICT & Computer Science students in Sri Lanka, featuring subscription-based access control, interactive quizzes, community forums, and progress tracking.
 
 ## 📋 Software Requirements Specification (SRS) Implementation
 
 ### ✅ Requirement 1: Product Alignment & Branding
+
 - **Status**: ✅ Complete
 - **Deliverables**:
-  - Platform rebranded to "LearntIt - Smart Learning, Better Results"
+  - Platform rebranded to "LearnIt - Smart Learning, Better Results"
   - Color scheme updated to indigo/purple theme (#6366f1 primary)
   - Tagline and branding integrated into Navbar and login page
   - SEO-optimized metadata for platform discovery
   - Target audience identified: O/L and A/L students
 
 ### ✅ Requirement 2: User Roles & Registration Enhancements
+
 - **Status**: ✅ Partial (Core Complete)
 - **Implemented**:
   - Three user roles: Student, Professor/Instructor, Admin
@@ -22,6 +24,7 @@ A comprehensive Learning Management System (LMS) designed for O/L and A/L ICT & 
   - User authentication with role-based dashboards
 
 ### ✅ Requirement 3: Subscription Management System
+
 - **Status**: ✅ Complete
 - **Features**:
   - Three subscription tiers: Free, Basic, Pro
@@ -32,6 +35,7 @@ A comprehensive Learning Management System (LMS) designed for O/L and A/L ICT & 
   - Plan comparison and pricing display
 
 **Subscription Plans**:
+
 ```
 Free: LKR 0/month
 ├─ Basic courses access
@@ -55,6 +59,7 @@ Pro: LKR 999/month
 ```
 
 ### ✅ Requirement 4: Learning Materials & Course Structure
+
 - **Status**: ✅ Complete
 - **Features**:
   - Hierarchical course structure: Courses → Modules → Topics
@@ -64,6 +69,7 @@ Pro: LKR 999/month
   - Mock database with 5 sample courses
 
 ### ✅ Requirement 5: Assessments & Practice System
+
 - **Status**: ✅ Complete
 - **Features**:
   - **Quiz System** (`/api/quizzes`):
@@ -82,6 +88,7 @@ Pro: LKR 999/month
   - **Access Restrictions**: Free plan blocked from quizzes
 
 ### ✅ Requirement 6: Progress Tracking & Certification
+
 - **Status**: ✅ Complete
 - **Features**:
   - **Progress Tracking** (`/api/progress`):
@@ -104,6 +111,7 @@ Pro: LKR 999/month
     - Next steps recommendations
 
 ### ✅ Requirement 7: Community & Support Features
+
 - **Status**: ✅ Complete
 - **Features**:
   - **Forum System** (`/api/forum`):
@@ -125,6 +133,7 @@ Pro: LKR 999/month
     - Support contact information
 
 ### ✅ Requirement 8: UI/UX Enhancements
+
 - **Status**: ✅ Complete
 - **Implemented Components**:
   - `SubscriptionCard.tsx` - Plan comparison and upgrade UI
@@ -137,6 +146,7 @@ Pro: LKR 999/month
   - Smooth animations and transitions
 
 ### ✅ Requirement 9: Security & Authentication
+
 - **Status**: ✅ Complete
 - **Features**:
   - **Authentication**:
@@ -154,6 +164,7 @@ Pro: LKR 999/month
     - Secure password handling (mock data)
 
 ### ✅ Requirement 10: Performance & Scalability
+
 - **Status**: ✅ Architected
 - **Optimizations**:
   - Server-side rendering capability via Next.js 14
@@ -219,7 +230,7 @@ frontend/
 ├── types/
 │   └── index.ts (comprehensive type definitions)
 ├── styles/
-│   ├── globals.css (updated with LearntIt palette)
+│   ├── globals.css (updated with LearnIt palette)
 │   └── variables.css (CSS variables)
 ├── public/
 │   └── (static assets)
@@ -234,24 +245,26 @@ frontend/
 ## 📊 Data Models
 
 ### User Model
+
 ```typescript
 {
-  id: string
-  email: string
-  password: string
-  fullName: string
-  role: 'student' | 'professor' | 'admin'
-  educationalLevel: 'O/L' | 'A/L'
+  id: string;
+  email: string;
+  password: string;
+  fullName: string;
+  role: "student" | "professor" | "admin";
+  educationalLevel: "O/L" | "A/L";
   subscription: {
-    plan: 'free' | 'basic' | 'pro'
-    startDate: string
-    endDate: string
-    status: 'active' | 'expired' | 'cancelled'
+    plan: "free" | "basic" | "pro";
+    startDate: string;
+    endDate: string;
+    status: "active" | "expired" | "cancelled";
   }
 }
 ```
 
 ### Course Model
+
 ```typescript
 {
   id: string
@@ -264,6 +277,7 @@ frontend/
 ```
 
 ### Quiz Model
+
 ```typescript
 {
   id: string
@@ -278,14 +292,15 @@ frontend/
 ```
 
 ### Certificate Model
+
 ```typescript
 {
-  id: string
-  userId: string
-  courseId: string
-  issuedDate: string
-  verificationCode: string
-  status: 'issued' | 'revoked'
+  id: string;
+  userId: string;
+  courseId: string;
+  issuedDate: string;
+  verificationCode: string;
+  status: "issued" | "revoked";
 }
 ```
 
@@ -294,27 +309,33 @@ frontend/
 ## 🔌 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
 
 ### Subscriptions
+
 - `GET /api/subscriptions/upgrade` - Get available plans
 - `POST /api/subscriptions/upgrade` - Upgrade subscription
 
 ### Quizzes
+
 - `GET /api/quizzes?courseId=X` - Get course quizzes
 - `POST /api/quizzes` - Submit quiz attempt
 
 ### Forum
+
 - `GET /api/forum?courseId=X` - Get course discussions
 - `POST /api/forum` - Create discussion/reply
 - `PATCH /api/forum` - Moderate content
 
 ### Progress
+
 - `GET /api/progress?userId=X` - Get user progress
 - `POST /api/progress` - Update progress
 
 ### Certificates
+
 - `GET /api/certificates?userId=X` - Get user certificates
 - `POST /api/certificates` - Issue certificate
 - `DELETE /api/certificates` - Revoke certificate (admin)
@@ -324,34 +345,38 @@ frontend/
 ## 🎯 Key Features
 
 ### For Students
+
 ✅ Free access to basic courses  
 ✅ Upgrade to Basic/Pro for premium content  
 ✅ Take quizzes and get immediate feedback  
 ✅ Track learning progress with analytics  
 ✅ Download certificates on course completion  
 ✅ Participate in course forums  
-✅ Access study materials and resources  
+✅ Access study materials and resources
 
 ### For Instructors
+
 ✅ Create and manage courses  
 ✅ Track student progress  
 ✅ View class analytics  
 ✅ Moderate forum discussions  
-✅ Access course-specific metrics  
+✅ Access course-specific metrics
 
 ### For Admins
+
 ✅ Platform-wide analytics  
 ✅ User management  
 ✅ Subscription management  
 ✅ Forum moderation  
 ✅ Certificate revocation  
-✅ System configuration  
+✅ System configuration
 
 ---
 
 ## 🚀 Getting Started
 
 ### Installation
+
 ```bash
 # Install dependencies
 npm install
@@ -368,6 +393,7 @@ npm start
 ```
 
 ### Development
+
 ```bash
 # Start dev server
 npm run dev
@@ -383,6 +409,7 @@ npm run format
 ```
 
 ### Testing
+
 ```bash
 # Run tests (setup required)
 npm test
@@ -398,14 +425,17 @@ npm run test:e2e
 Default test credentials:
 
 **Student**
+
 - Email: `student@example.com`
 - Password: `student123`
 
 **Instructor**
+
 - Email: `instructor@example.com`
 - Password: `instructor123`
 
 **Admin**
+
 - Email: `admin@example.com`
 - Password: `admin123`
 
@@ -413,21 +443,22 @@ Default test credentials:
 
 ## 💳 Subscription Plans
 
-| Feature | Free | Basic | Pro |
-|---------|------|-------|-----|
-| **Price** | Free | LKR 299/mo | LKR 999/mo |
-| Courses | Basic Only | All | All |
-| Study Materials | Limited (5 pages) | Full | Full |
-| Quizzes | ❌ | ✅ (3/month) | ✅ (Unlimited) |
-| Certificates | ❌ | ❌ | ✅ |
-| Analytics | ❌ | Basic | Advanced |
-| Support | Community | Email | Priority |
+| Feature         | Free              | Basic        | Pro            |
+| --------------- | ----------------- | ------------ | -------------- |
+| **Price**       | Free              | LKR 299/mo   | LKR 999/mo     |
+| Courses         | Basic Only        | All          | All            |
+| Study Materials | Limited (5 pages) | Full         | Full           |
+| Quizzes         | ❌                | ✅ (3/month) | ✅ (Unlimited) |
+| Certificates    | ❌                | ❌           | ✅             |
+| Analytics       | ❌                | Basic        | Advanced       |
+| Support         | Community         | Email        | Priority       |
 
 ---
 
 ## 📈 Analytics
 
 ### Student Dashboard
+
 - Learning progress percentage
 - Courses completed/in progress
 - Certificates earned
@@ -436,6 +467,7 @@ Default test credentials:
 - Recent activity
 
 ### Admin Dashboard
+
 - Total users (by subscription)
 - Enrollment statistics
 - Course performance metrics
@@ -448,7 +480,9 @@ Default test credentials:
 ## 🛠️ Customization
 
 ### Adding New Courses
+
 Edit `lib/mockData.ts`:
+
 ```typescript
 mockCourses.push({
   id: 'new-course',
@@ -459,10 +493,13 @@ mockCourses.push({
 ```
 
 ### Modifying Subscription Plans
+
 Update `subscriptionMiddleware.ts` `planFeatures` object to add/remove features per plan.
 
 ### Styling
+
 All colors use CSS variables in `styles/globals.css`:
+
 - Primary: `--primary` (#6366f1)
 - Accent: `--accent` (#ec4899)
 - Borders: `--border-color` (#e5e7eb)
@@ -494,7 +531,8 @@ MIT License - See LICENSE file for details
 ## 📞 Support
 
 For support or questions:
-- Email: `support@LearntIt.lk`
+
+- Email: `support@LearnIt.lk`
 - GitHub Issues: [Report issues](https://github.com)
 - Documentation: Check docs folder
 
@@ -503,6 +541,7 @@ For support or questions:
 ## 🎯 Roadmap
 
 ### Phase 2 (Q2 2024)
+
 - [ ] Real database integration (PostgreSQL)
 - [ ] Stripe payment gateway
 - [ ] Email notifications
@@ -511,6 +550,7 @@ For support or questions:
 - [ ] Advanced reporting
 
 ### Phase 3 (Q3 2024)
+
 - [ ] AI-powered tutoring
 - [ ] Gamification (badges, leaderboards)
 - [ ] Advanced search and filtering
@@ -519,6 +559,6 @@ For support or questions:
 
 ---
 
-**LearntIt - Empowering Sri Lankan Students with Quality Education**
+**LearnIt - Empowering Sri Lankan Students with Quality Education**
 
 Last Updated: January 2024
