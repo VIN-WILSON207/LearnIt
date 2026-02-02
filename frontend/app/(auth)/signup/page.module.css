@@ -58,14 +58,16 @@
   color: var(--text-primary);
 }
 
-.formGroup input {
+.formGroup input,
+.formGroup select {
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 1rem;
 }
 
-.formGroup input:focus {
+.formGroup input:focus,
+.formGroup select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
@@ -92,20 +94,20 @@
   cursor: not-allowed;
 }
 
-.signupLink {
+.loginLink {
   text-align: center;
   margin-top: 1rem;
   color: #666;
   font-size: 0.9rem;
 }
 
-.signupLink a {
+.loginLink a {
   color: #667eea;
   text-decoration: none;
   font-weight: 500;
 }
 
-.signupLink a:hover {
+.loginLink a:hover {
   text-decoration: underline;
 }
 
@@ -117,27 +119,6 @@
   border-radius: 4px;
   font-size: 0.9rem;
 }
-
-.footerLink {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.link {
-  font-size: 14px;
-  color: #555;
-}
-
-.link a {
-  color: #4f46e5;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.link a:hover {
-  text-decoration: underline;
-}
-
 
 @media (max-width: 600px) {
   .header h1 {

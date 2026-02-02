@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import fs from 'fs';
 import path from 'path';
+import { handleError } from '../utils/errorHandler';
 
 // Helper to delete file if DB op fails
 const deleteFile = (filePath: string) => {
@@ -29,8 +30,7 @@ export const createCourse = async (req: Request, res: Response) => {
         });
         res.status(201).json(course);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create course' });
+        handleError(error, res, 500, 'Failed to create course');
     }
 };
 
@@ -61,8 +61,7 @@ export const uploadLesson = async (req: Request, res: Response) => {
 
         res.status(201).json(lesson);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to upload lesson' });
+        handleError(error, res, 500, 'Failed to upload lesson');
     }
 };
 
@@ -75,7 +74,7 @@ export const getInstructorCourses = async (req: Request, res: Response) => {
         });
         res.json(courses);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch courses' });
+        handleError(error, res, 500, 'Failed to fetch courses');
     }
 };
 
@@ -99,8 +98,7 @@ export const getCourseById = async (req: Request, res: Response) => {
 
         res.json(course);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch course details' });
+        handleError(error, res, 500, 'Failed to fetch course details');
     }
 };
 
@@ -116,6 +114,6 @@ export const getAllCourses = async (req: Request, res: Response) => {
         });
         res.json(courses);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch courses' });
+        handleError(error, res, 500, 'Failed to fetch courses');
     }
 };

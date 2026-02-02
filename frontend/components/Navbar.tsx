@@ -50,12 +50,12 @@ export const Navbar: React.FC = () => {
             </>
           )}
 
-          {user.role === 'professor' && (
+          {user.role === 'instructor' && (
             <>
-              <Link href="/professor/courses" className={styles.navItem}>
+              <Link href="/instructor/courses" className={styles.navItem}>
                 My Courses
               </Link>
-              <Link href="/professor/students" className={styles.navItem}>
+              <Link href="/instructor/students" className={styles.navItem}>
                 Students
               </Link>
             </>

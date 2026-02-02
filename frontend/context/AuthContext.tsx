@@ -1,26 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  levelId?: string;
-  subscription?: {
-    plan: string;
-    status: string;
-  };
-}
+import apiClient, { tokenManager, normalizeRole, ApiError } from '@/lib/apiClient';
+import { LoginResponse, User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: string, levelId?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -32,62 +20,121 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-
-    if (storedUser && storedToken) {
+    const initializeAuth = () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const storedUser = localStorage.getItem('user');
+        const token = tokenManager.getToken();
+
+        if (storedUser && token) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+          } catch (error) {
+            console.error('Failed to parse stored user:', error);
+            localStorage.removeItem('user');
+            tokenManager.clearToken();
+          }
+        } else if (!token) {
+          // No token means not authenticated, clear any stale user data
+          tokenManager.clearToken();
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
       } catch (error) {
-        console.error('Failed to parse stored user:', error);
+        console.error('Auth initialization error:', error);
+        tokenManager.clearToken();
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const data = await apiClient.post<LoginResponse>('/api/auth/login', {
+        email,
+        password,
       });
 
-      const data = await response.json();
+      // Store token
+      tokenManager.setToken(data.token);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+      // Normalize role (INSTRUCTOR → instructor, uppercase → lowercase)
+      const normalizedRole = normalizeRole(data.user.role);
+
+      // Create normalized user object
+      const normalizedUser: User = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: normalizedRole,
+        avatar: undefined, // Backend doesn't provide avatar yet
+      };
+
+      // Store user
+      setUser(normalizedUser);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+    } catch (error) {
+      // Clear any stale auth data on login failure
+      tokenManager.clearToken();
+      
+      if (error instanceof ApiError) {
+        throw new Error(error.message || 'Login failed');
       }
+      throw error;
 
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData: any) => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role: string = 'STUDENT',
+    levelId?: string
+  ) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
+      const data = await apiClient.post<LoginResponse>('/api/auth/register', {
+        name,
+        email,
+        password,
+        role,
+        levelId,
       });
 
-      const data = await response.json();
+      // Store token
+      tokenManager.setToken(data.token);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+      // Normalize role
+      const normalizedRole = normalizeRole(data.user.role);
+
+      // Create normalized user object
+      const normalizedUser: User = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: normalizedRole,
+        avatar: undefined,
+      };
+
+      // Store user
+      setUser(normalizedUser);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+    } catch (error) {
+      tokenManager.clearToken();
+      
+      if (error instanceof ApiError) {
+        throw new Error(error.message || 'Registration failed');
       }
-
-      setUser(data.user);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    tokenManager.clearToken();
     localStorage.removeItem('user');
     localStorage.removeItem('token');
   };
