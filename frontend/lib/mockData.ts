@@ -76,6 +76,29 @@ export const subscriptionPlans = {
       assessmentAttempts: 'Unlimited',
     },
   },
+  student_basic: {
+    name: 'Student Basic',
+    price: 149,
+    features: {
+      noteAccess: 'Full standard notes',
+      learningMaterials: 'Quizzes & practice (5 attempts/month)',
+      assessments: true,
+      certificates: false,
+      progressTracking: 'Basic',
+    },
+  },
+  student_pro: {
+    name: 'Student Pro',
+    price: 399,
+    features: {
+      noteAccess: 'Full access',
+      learningMaterials: 'All content',
+      assessments: true,
+      certificates: true,
+      progressTracking: 'Advanced analytics',
+      assessmentAttempts: 'Unlimited',
+    },
+  },
 };
 
 // Mock courses with subscription requirements

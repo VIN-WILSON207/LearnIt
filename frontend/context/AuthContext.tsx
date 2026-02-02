@@ -8,8 +8,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: string, levelId?: string) => Promise<void>;
   logout: () => void;
-  register?: (name: string, email: string, password: string, role?: string, levelId?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,15 +31,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(parsedUser);
           } catch (error) {
             console.error('Failed to parse stored user:', error);
+            localStorage.removeItem('user');
             tokenManager.clearToken();
           }
         } else if (!token) {
           // No token means not authenticated, clear any stale user data
           tokenManager.clearToken();
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         tokenManager.clearToken();
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
@@ -82,6 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(error.message || 'Login failed');
       }
       throw error;
+
     } finally {
       setIsLoading(false);
     }
@@ -137,10 +143,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setUser(null);
     tokenManager.clearToken();
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

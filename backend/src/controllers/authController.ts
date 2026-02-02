@@ -6,6 +6,20 @@ import { handleError } from '../utils/errorHandler';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
 
+export const getRegistrationConfig = async (req: Request, res: Response) => {
+    try {
+        const levels = await prisma.level.findMany({
+            include: {
+                subjects: true,
+            },
+        });
+        res.status(200).json(levels);
+    } catch (error) {
+        console.error('Failed to fetch registration config:', error);
+        res.status(500).json({ error: 'Failed to fetch registration configuration' });
+    }
+};
+
 export const register = async (req: Request, res: Response) => {
     try {
         console.log('Registration request body:', req.body);
@@ -37,8 +51,15 @@ export const register = async (req: Request, res: Response) => {
                 email,
                 password: hashedPassword,
                 role: role || 'STUDENT',
-                levelId: levelId || null,
+                levelId: levelId || undefined,
             },
+            include: {
+                level: true,
+                subscriptions: {
+                    where: { isActive: true },
+                    take: 1
+                }
+            }
         });
 
         const token = jwt.sign(
@@ -46,6 +67,9 @@ export const register = async (req: Request, res: Response) => {
             JWT_SECRET,
             { expiresIn: '7d' }
         );
+
+        // Transform subscriptions array to single subscription object for frontend
+        const subscription = user.subscriptions[0] || null;
 
         res.status(201).json({
             message: 'Successful registration',
@@ -55,6 +79,9 @@ export const register = async (req: Request, res: Response) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                levelId: user.levelId,
+                level: user.level,
+                subscription,
             },
         });
     } catch (error) {
@@ -66,7 +93,17 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                level: true,
+                subscriptions: {
+                    where: { isActive: true },
+                    take: 1
+                }
+            }
+        });
+
         if (!user) {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
@@ -84,6 +121,9 @@ export const login = async (req: Request, res: Response) => {
             { expiresIn: '7d' }
         );
 
+        // Transform subscriptions array to single subscription object for frontend
+        const subscription = user.subscriptions[0] || null;
+
         res.status(200).json({
             message: 'Login successful',
             token,
@@ -92,6 +132,9 @@ export const login = async (req: Request, res: Response) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                levelId: user.levelId,
+                level: user.level,
+                subscription,
             },
         });
     } catch (error) {

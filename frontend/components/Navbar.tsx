@@ -23,7 +23,7 @@ export const Navbar: React.FC = () => {
     <nav className={styles.navbar}>
       <div className={styles.container}>
         <Link href={`/${user.role}/dashboard`} className={styles.logo}>
-          LearntIt
+          LearnIt
         </Link>
         <span className={styles.tagline}>Smart Learning, Better Results</span>
 

@@ -12,13 +12,15 @@ export interface Subscription {
 export interface User {
   id: string;
   email: string;
-  password?: string; // Optional, not returned from backend
-  fullName?: string;
   name: string; // Required, from backend
-  role: 'student' | 'instructor' | 'admin'; // Normalized role (instructor = INSTRUCTOR)
+  role: 'student' | 'instructor' | 'admin'; // Normalized role (lowercase for frontend)
   avatar?: string;
-  educationalLevel?: 'O/L' | 'A/L';
-  subscription?: Subscription;
+  levelId?: string;
+  level?: {
+    id: string;
+    name: string;
+  };
+  subscription?: Subscription | null;
 }
 
 // Backend User (raw response from API)

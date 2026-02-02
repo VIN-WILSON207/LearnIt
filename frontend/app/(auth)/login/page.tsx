@@ -16,10 +16,11 @@ export default function Login() {
   const { login, user } = useAuth();
   const router = useRouter();
 
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      router.push(`/${user.role}/dashboard`);
+      router.push(`/${user.role.toLowerCase()}/dashboard`);
     }
   }, [user, router]);
 
@@ -30,8 +31,8 @@ export default function Login() {
 
     try {
       await login(email, password);
-    } catch (err) {
-      setError('Invalid email or password. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password. Please try again.');
       console.error('Login failed:', err);
     } finally {
       setIsLoading(false);
@@ -42,7 +43,7 @@ export default function Login() {
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <h1>LearntIt</h1>
+          <h1>LearnIt</h1>
           <p>Smart Learning, Better Results</p>
         </div>
 
@@ -81,7 +82,7 @@ export default function Login() {
             </Button>
 
             <p className={styles.signupLink}>
-              Don't have an account? <Link href="/signup">Sign up</Link>
+              Don't have an account? <Link href="/register">Sign up</Link>
             </p>
           </form>
         </Card>

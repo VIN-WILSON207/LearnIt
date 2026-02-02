@@ -6,21 +6,30 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 
 interface SubscriptionPlanProps {
-  plan: string;
+  id: string;
   name: string;
   price: number;
   currency: string;
+  billingCycle: 'month' | 'year';
   features: string[];
+  cta: string;
+  badge?: string;
   isCurrentPlan?: boolean;
   onUpgrade?: () => void;
+  subscription?: {
+    plan: string;
+  }
 }
 
 export const SubscriptionCard: React.FC<SubscriptionPlanProps> = ({
-  plan,
+  id,
   name,
   price,
   currency,
+  billingCycle,
   features,
+  cta,
+  badge,
   isCurrentPlan = false,
   onUpgrade,
 }) => {
@@ -60,7 +69,8 @@ export const SubscriptionPlans: React.FC = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch('/api/subscriptions/upgrade');
+        const url = user?.role ? `/api/subscriptions/upgrade?role=${encodeURIComponent(user.role)}` : '/api/subscriptions/upgrade';
+        const res = await fetch(url);
         const data = await res.json();
         setPlans(data.plans);
       } catch (error) {
