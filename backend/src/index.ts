@@ -31,7 +31,7 @@ requiredEnvVars.forEach(envVar => {
 optionalEnvVars.forEach(envVar => {
   if (!process.env[envVar]) {
     console.warn(`⚠️  WARNING: Missing optional environment variable: ${envVar}`);
-    console.warn(`   File uploads will not work without Cloudinary credentials`);
+    console.warn(`   Using local file storage instead of Cloudinary`);
   }
 });
 

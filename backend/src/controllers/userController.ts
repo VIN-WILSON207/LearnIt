@@ -1,10 +1,61 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
 import { Role } from '@prisma/client';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string };
 }
+
+export const createUser = async (req: AuthRequest, res: Response) => {
+    try {
+        if (req.user?.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const { name, email, password, role, levelId } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'Name, email, and password are required' });
+        }
+
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User with this email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: (role || 'STUDENT') as Role,
+                levelId: levelId || null,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                level: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            }
+        });
+
+        res.status(201).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
+};
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
     try {

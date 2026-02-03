@@ -12,6 +12,7 @@ export interface CreateCourseRequest {
   description?: string;
   subjectId: string;
   instructorId: string;
+  thumbnail?: File;
 }
 
 export interface UploadLessonRequest {
@@ -45,10 +46,25 @@ export async function getInstructorCourses(instructorId: string): Promise<Backen
 }
 
 /**
- * Create a new course (authenticated, INSTRUCTOR or ADMIN)
+ * Create a new course (authenticated, INSTRUCTOR or ADMIN).
+ * If thumbnail is provided, sends FormData and image is stored in Cloudinary.
  */
 export async function createCourse(data: CreateCourseRequest): Promise<BackendCourse> {
-  return apiClient.post<BackendCourse>('/api/courses', data);
+  if (data.thumbnail) {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    formData.append('subjectId', data.subjectId);
+    formData.append('instructorId', data.instructorId);
+    formData.append('thumbnail', data.thumbnail);
+    return apiClient.postFormData<BackendCourse>('/api/courses', formData);
+  }
+  return apiClient.post<BackendCourse>('/api/courses', {
+    title: data.title,
+    description: data.description,
+    subjectId: data.subjectId,
+    instructorId: data.instructorId,
+  });
 }
 
 /**
@@ -69,4 +85,25 @@ export async function uploadLesson(data: UploadLessonRequest): Promise<any> {
   }
 
   return apiClient.postFormData('/api/courses/lesson', formData);
+}
+
+/**
+ * Publish a course (ADMIN only)
+ */
+export async function publishCourse(courseId: string): Promise<BackendCourse> {
+  return apiClient.patch<BackendCourse>(`/api/courses/${courseId}/publish`, {});
+}
+
+/**
+ * Unpublish a course (ADMIN only)
+ */
+export async function unpublishCourse(courseId: string): Promise<BackendCourse> {
+  return apiClient.patch<BackendCourse>(`/api/courses/${courseId}/unpublish`, {});
+}
+
+/**
+ * Delete a course (ADMIN only)
+ */
+export async function deleteCourse(courseId: string): Promise<void> {
+  return apiClient.delete(`/api/courses/${courseId}`);
 }

@@ -5,6 +5,39 @@ interface AuthRequest extends Request {
     user?: { userId: string; role: string };
 }
 
+/** Get students enrolled in an instructor's courses (INSTRUCTOR or ADMIN only) */
+export const getStudentsByInstructor = async (req: AuthRequest, res: Response) => {
+    try {
+        const { instructorId } = req.params;
+        const userId = req.user?.userId;
+        const role = req.user?.role;
+
+        if (userId !== instructorId && role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: {
+                course: { instructorId: String(instructorId) },
+            },
+            include: {
+                student: {
+                    select: { id: true, name: true, email: true },
+                },
+                course: {
+                    select: { id: true, title: true },
+                },
+            },
+            orderBy: { enrolledAt: 'desc' },
+        });
+
+        res.json(enrollments);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch students' });
+    }
+};
+
 export const getEnrollments = async (req: AuthRequest, res: Response) => {
     try {
         const studentId = req.query.studentId as string | undefined;

@@ -1,16 +1,29 @@
 /**
  * Users API
- * 
+ *
  * Functions for user management endpoints
- * Note: These endpoints need to be created in the backend
  */
 
 import apiClient from '../apiClient';
 import { BackendUser } from '@/types';
 
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+  levelId?: string;
+}
+
+/**
+ * Create a new user (ADMIN only)
+ */
+export async function createUser(data: CreateUserRequest): Promise<BackendUser> {
+  return apiClient.post<BackendUser>('/api/users', data);
+}
+
 /**
  * Get all users (ADMIN only)
- * TODO: Create this endpoint in backend
  */
 export async function getAllUsers(): Promise<BackendUser[]> {
   return apiClient.get<BackendUser[]>('/api/users');

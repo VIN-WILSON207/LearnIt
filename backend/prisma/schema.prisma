@@ -60,6 +60,7 @@ model Course {
   id           String   @id @default(uuid())
   title        String
   description  String?
+  thumbnailUrl String?
   subjectId    String
   instructorId String
   isPublished  Boolean  @default(false)

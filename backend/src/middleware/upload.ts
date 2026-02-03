@@ -1,27 +1,32 @@
 import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
+import path from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
-
-// IMPORTANT: CommonJS require
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CloudinaryStorage = require('multer-storage-cloudinary');
 
 dotenv.config();
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'learnit_courses',
-    resource_type: 'auto',
+// Use local disk storage for now (Cloudinary integration can be added later)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
   },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  }
+});
 
 export default upload;
