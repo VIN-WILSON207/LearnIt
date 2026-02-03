@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { formatCourseURLs } from '../utils/formatters';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string };
@@ -68,7 +69,10 @@ export const getEnrollments = async (req: AuthRequest, res: Response) => {
             orderBy: { enrolledAt: 'desc' }
         });
 
-        res.json(enrollments);
+        res.json(enrollments.map(e => ({
+            ...e,
+            course: e.course ? formatCourseURLs(e.course, req) : null
+        })));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch enrollments' });
@@ -128,7 +132,10 @@ export const enrollInCourse = async (req: AuthRequest, res: Response) => {
             }
         });
 
-        res.status(201).json(enrollment);
+        res.status(201).json({
+            ...enrollment,
+            course: enrollment.course ? formatCourseURLs(enrollment.course, req) : null
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to enroll in course' });

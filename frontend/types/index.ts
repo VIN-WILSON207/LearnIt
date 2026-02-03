@@ -265,11 +265,23 @@ export interface BackendCourse {
     id: string;
     code: string;
     name: string;
+    level?: {
+      id: string;
+      name: string;
+    };
   };
   instructor?: {
     name: string;
   };
   lessons?: BackendLesson[];
+}
+
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+  course?: Partial<BackendCourse>;
 }
 
 export interface BackendLesson {

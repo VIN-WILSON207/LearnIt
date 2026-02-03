@@ -1,0 +1,119 @@
+.container {
+     max-width: 800px;
+     margin: 0 auto;
+     padding: 3rem 1rem;
+}
+
+.header {
+     text-align: center;
+     margin-bottom: 3rem;
+}
+
+.header h1 {
+     font-size: 2rem;
+     margin: 1rem 0 0.5rem;
+}
+
+.header p {
+     color: var(--text-secondary);
+}
+
+.questionsList {
+     display: flex;
+     flex-direction: column;
+     gap: 2rem;
+}
+
+.questionCard {
+     padding: 2rem !important;
+}
+
+.questionHeader {
+     margin-bottom: 1.5rem;
+}
+
+.qNumber {
+     display: block;
+     font-size: 0.875rem;
+     font-weight: 600;
+     color: var(--primary);
+     text-transform: uppercase;
+     margin-bottom: 0.5rem;
+}
+
+.questionHeader h3 {
+     font-size: 1.25rem;
+}
+
+.options {
+     display: flex;
+     flex-direction: column;
+     gap: 0.75rem;
+}
+
+.option {
+     padding: 1rem;
+     border: 2px solid var(--border);
+     border-radius: 0.75rem;
+     cursor: pointer;
+     transition: all 0.2s;
+     font-weight: 500;
+}
+
+.option:hover {
+     border-color: var(--primary-light);
+     background: var(--bg-hover);
+}
+
+.option.selected {
+     border-color: var(--primary);
+     background: rgba(var(--primary-rgb), 0.05);
+     color: var(--primary);
+}
+
+.actions {
+     display: flex;
+     justify-content: center;
+     margin-top: 3rem;
+}
+
+.center {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     min-height: 50vh;
+}
+
+.resultCard {
+     text-align: center;
+     padding: 4rem 2rem !important;
+}
+
+.success {
+     color: #10b981;
+}
+
+.fail {
+     color: var(--error);
+}
+
+.resultCard h1 {
+     font-size: 2.5rem;
+     margin: 1.5rem 0 0.5rem;
+}
+
+.resultCard p {
+     font-size: 1.25rem;
+     color: var(--text-secondary);
+     margin-bottom: 2.5rem;
+}
+
+.resultActions {
+     display: flex;
+     justify-content: center;
+     gap: 1rem;
+}
+
+.error {
+     color: var(--error);
+}

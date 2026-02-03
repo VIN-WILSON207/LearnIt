@@ -94,9 +94,9 @@ app.use(cors()); // Allows all origins - should be restricted in production
 - [ ] Manage users (edit/delete)
 - [ ] View all courses
 
-### Professor Flow
-- [ ] Login as instructor (professor in frontend)
-- [ ] View professor dashboard
+### instructor  Flow
+- [ ] Login as instructor
+- [ ] View instructor  dashboard
 - [ ] View own courses
 - [ ] Create new course
 - [ ] Upload lesson

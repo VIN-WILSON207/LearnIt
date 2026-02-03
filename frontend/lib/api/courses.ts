@@ -79,7 +79,7 @@ export async function uploadLesson(data: UploadLessonRequest): Promise<any> {
   }
   formData.append('orderNumber', data.orderNumber.toString());
   formData.append('isFree', (data.isFree ?? false).toString());
-  
+
   if (data.video) {
     formData.append('video', data.video);
   }
@@ -99,6 +99,21 @@ export async function publishCourse(courseId: string): Promise<BackendCourse> {
  */
 export async function unpublishCourse(courseId: string): Promise<BackendCourse> {
   return apiClient.patch<BackendCourse>(`/api/courses/${courseId}/unpublish`, {});
+}
+
+/**
+ * Update an existing course (authenticated, INSTRUCTOR or ADMIN).
+ */
+export async function updateCourse(id: string, data: Partial<CreateCourseRequest>): Promise<BackendCourse> {
+  if (data.thumbnail) {
+    const formData = new FormData();
+    if (data.title) formData.append('title', data.title);
+    if (data.description) formData.append('description', data.description);
+    if (data.subjectId) formData.append('subjectId', data.subjectId);
+    formData.append('thumbnail', data.thumbnail);
+    return apiClient.patchFormData<BackendCourse>(`/api/courses/${id}`, formData);
+  }
+  return apiClient.patch<BackendCourse>(`/api/courses/${id}`, data);
 }
 
 /**

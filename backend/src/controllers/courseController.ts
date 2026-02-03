@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import fs from 'fs';
 import path from 'path';
 import { handleError } from '../utils/errorHandler';
+import { formatCourseURLs } from '../utils/formatters';
 
 // Helper to delete file if DB op fails
 const deleteFile = (filePath: string) => {
@@ -15,8 +16,12 @@ const deleteFile = (filePath: string) => {
 export const createCourse = async (req: Request, res: Response) => {
     try {
         const { title, description, subjectId, instructorId } = req.body;
-        // For local storage, store relative path; for Cloudinary it would be the full URL
-        const thumbnailUrl = (req as any).file ? `/uploads/${(req as any).file.filename}` : null;
+        // If file exists, use file.path which is the Cloudinary URL. 
+        // fallback to /uploads/filename only if path is relative.
+        let thumbnailUrl = null;
+        if (req.file) {
+            thumbnailUrl = req.file.path.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`;
+        }
 
         if (!title || !subjectId || !instructorId) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -35,7 +40,7 @@ export const createCourse = async (req: Request, res: Response) => {
                 instructor: { select: { name: true } },
             },
         });
-        res.status(201).json(course);
+        res.status(201).json(formatCourseURLs(course, req));
     } catch (error) {
         handleError(error, res, 500, 'Failed to create course');
     }
@@ -52,8 +57,7 @@ export const uploadLesson = async (req: Request, res: Response) => {
 
         let videoUrl = null;
         if (file) {
-            // For local storage, store relative path
-            videoUrl = `/uploads/${file.filename}`;
+            videoUrl = file.path.startsWith('http') ? file.path : `/uploads/${file.filename}`;
         }
 
         const lesson = await prisma.lesson.create({
@@ -67,7 +71,7 @@ export const uploadLesson = async (req: Request, res: Response) => {
             }
         });
 
-        res.status(201).json(lesson);
+        res.status(201).json(formatCourseURLs({ lessons: [lesson] }, req).lessons[0]);
     } catch (error) {
         handleError(error, res, 500, 'Failed to upload lesson');
     }
@@ -80,7 +84,7 @@ export const getInstructorCourses = async (req: Request, res: Response) => {
             where: { instructorId: String(instructorId) },
             include: { subject: true, lessons: true }
         });
-        res.json(courses);
+        res.json(courses.map(c => formatCourseURLs(c, req)));
     } catch (error) {
         handleError(error, res, 500, 'Failed to fetch courses');
     }
@@ -104,7 +108,7 @@ export const getCourseById = async (req: Request, res: Response) => {
 
         if (!course) return res.status(404).json({ error: 'Course not found' });
 
-        res.json(course);
+        res.json(formatCourseURLs(course, req));
     } catch (error) {
         handleError(error, res, 500, 'Failed to fetch course details');
     }
@@ -120,7 +124,7 @@ export const getAllCourses = async (req: Request, res: Response) => {
                 }
             }
         });
-        res.json(courses);
+        res.json(courses.map(c => formatCourseURLs(c, req)));
     } catch (error) {
         handleError(error, res, 500, 'Failed to fetch courses');
     }
@@ -137,7 +141,7 @@ export const publishCourse = async (req: Request, res: Response) => {
                 instructor: { select: { name: true } },
             },
         });
-        res.json(course);
+        res.json(formatCourseURLs(course, req));
     } catch (error) {
         handleError(error, res, 500, 'Failed to publish course');
     }
@@ -154,9 +158,37 @@ export const unpublishCourse = async (req: Request, res: Response) => {
                 instructor: { select: { name: true } },
             },
         });
-        res.json(course);
+        res.json(formatCourseURLs(course, req));
     } catch (error) {
         handleError(error, res, 500, 'Failed to unpublish course');
+    }
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { title, description, subjectId } = req.body;
+
+        const data: any = {};
+        if (title) data.title = title;
+        if (description) data.description = description;
+        if (subjectId) data.subjectId = subjectId;
+
+        if (req.file) {
+            data.thumbnailUrl = req.file.path.startsWith('http') ? req.file.path : `/uploads/${req.file.filename}`;
+        }
+
+        const course = await prisma.course.update({
+            where: { id: String(id) },
+            data,
+            include: {
+                subject: true,
+                instructor: { select: { name: true } },
+            },
+        });
+        res.json(formatCourseURLs(course, req));
+    } catch (error) {
+        handleError(error, res, 500, 'Failed to update course');
     }
 };
 

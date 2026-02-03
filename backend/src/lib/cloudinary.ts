@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import CloudinaryStorage from 'multer-storage-cloudinary';
 import multer from 'multer';
+import { Request } from 'express';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,9 +11,10 @@ cloudinary.config({
 });
 
 // Create storage engine
-const storage = new CloudinaryStorage({
+// @ts-ignore - multer-storage-cloudinary v2 uses a function call, not a constructor
+const storage = CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
+  params: async (req: Request, file: Express.Multer.File) => {
     let folder = 'learnit/general';
     let resource_type: 'image' | 'video' | 'raw' = 'image';
 

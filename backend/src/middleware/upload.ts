@@ -1,25 +1,46 @@
+import { Request } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import CloudinaryStorage from 'multer-storage-cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Use local disk storage for now (Cloudinary integration can be added later)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+// Create Cloudinary storage engine
+// @ts-ignore - multer-storage-cloudinary v2 uses a function call, not a constructor
+const storage = CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
+    let folder = 'learnit/general';
+    let resource_type: 'image' | 'video' | 'raw' = 'image';
+
+    // Determine folder and resource type based on file type
+    if (file.mimetype.startsWith('image/')) {
+      folder = 'learnit/images';
+      resource_type = 'image';
+    } else if (file.mimetype.startsWith('video/')) {
+      folder = 'learnit/videos';
+      resource_type = 'video';
+    } else {
+      folder = 'learnit/documents';
+      resource_type = 'raw';
+    }
+
+    return {
+      folder: folder,
+      resource_type: resource_type,
+      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
+      // Add standard allowed formats
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'avi', 'mov', 'pdf', 'doc', 'docx', 'txt'],
+    };
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
 });
 
 const upload = multer({

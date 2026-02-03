@@ -340,6 +340,46 @@ const apiClient = {
       );
     }
   },
+
+  /**
+   * PATCH request with FormData (for file uploads)
+   */
+  async patchFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const token = tokenManager.getToken();
+    const url = `${API_BASE_URL}${endpoint}`;
+
+    const headers: HeadersInit = {
+      // Don't set Content-Type for FormData, browser will set it with boundary
+      ...options.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetchWithTimeout(url, {
+        ...options,
+        method: 'PATCH',
+        headers,
+        body: formData,
+      });
+
+      return handleResponse<T>(response);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Network error',
+        0
+      );
+    }
+  },
 };
 
 export default apiClient;
