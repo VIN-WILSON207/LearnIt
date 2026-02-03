@@ -1,58 +1,109 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { getInstructorCourses } from '@/lib/api/courses';
+import { getInstructorCourses, createCourse } from '@/lib/api/courses';
 import { getEnrollments } from '@/lib/api/enrollments';
+import { getRegistrationConfig, LevelWithSubjects } from '@/lib/api/auth';
 import { BackendCourse } from '@/types';
 import styles from './page.module.css';
-import { FiUsers, FiBook, FiBarChart2 } from 'react-icons/fi';
+import { FiUsers, FiBook, FiBarChart2, FiX } from 'react-icons/fi';
 
 export default function InstructorDashboard() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [courses, setCourses] = useState<BackendCourse[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalCourses, setTotalCourses] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [levelsWithSubjects, setLevelsWithSubjects] = useState<LevelWithSubjects[]>([]);
+  const [createTitle, setCreateTitle] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [createSubjectId, setCreateSubjectId] = useState('');
+  const [createThumbnail, setCreateThumbnail] = useState<File | null>(null);
+  const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Get instructor's courses
-        const instructorCourses = await getInstructorCourses(user.id);
-        setCourses(instructorCourses);
-        setTotalCourses(instructorCourses.length);
-
-        // Get all enrollments to count unique students
-        const allEnrollments = await getEnrollments();
-        const studentIds = new Set<string>();
-        instructorCourses.forEach((course) => {
-          allEnrollments.forEach((enrollment) => {
-            if (enrollment.courseId === course.id) {
-              studentIds.add(enrollment.studentId);
-            }
-          });
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const instructorCourses = await getInstructorCourses(user.id);
+      setCourses(instructorCourses);
+      setTotalCourses(instructorCourses.length);
+      const allEnrollments = await getEnrollments();
+      const studentIds = new Set<string>();
+      instructorCourses.forEach((course) => {
+        allEnrollments.forEach((enrollment) => {
+          if (enrollment.courseId === course.id) {
+            studentIds.add(enrollment.studentId);
+          }
         });
-        setTotalStudents(studentIds.size);
-      } catch (err) {
-        console.error('Failed to fetch instructor data:', err);
-        setError('Failed to load dashboard data. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
+      });
+      setTotalStudents(studentIds.size);
+    } catch (err) {
+      console.error('Failed to fetch instructor data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setShowCreateModal(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (showCreateModal && levelsWithSubjects.length === 0) {
+      getRegistrationConfig().then(setLevelsWithSubjects).catch(console.error);
+    }
+  }, [showCreateModal, levelsWithSubjects.length]);
+
+  const allSubjects = levelsWithSubjects.flatMap((l) => l.subjects);
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !createTitle.trim() || !createSubjectId) {
+      setCreateError('Title and subject are required.');
+      return;
+    }
+    setCreateSubmitting(true);
+    setCreateError(null);
+    try {
+      await createCourse({
+        title: createTitle.trim(),
+        description: createDescription.trim() || undefined,
+        subjectId: createSubjectId,
+        instructorId: user.id,
+        thumbnail: createThumbnail || undefined,
+      });
+      setShowCreateModal(false);
+      setCreateTitle('');
+      setCreateDescription('');
+      setCreateSubjectId('');
+      setCreateThumbnail(null);
+      await fetchData();
+    } catch (err: any) {
+      setCreateError(err?.message || 'Failed to create course. Please try again.');
+    } finally {
+      setCreateSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -132,7 +183,7 @@ export default function InstructorDashboard() {
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2>My Courses</h2>
-            <Button variant="primary">Create New Course</Button>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Create New Course</Button>
           </div>
 
           <div className={styles.coursesList}>
@@ -145,6 +196,11 @@ export default function InstructorDashboard() {
             ) : (
               courses.map((course) => (
                 <Card key={course.id} className={styles.courseItem}>
+                  {course.thumbnailUrl && (
+                    <div className={styles.courseThumb}>
+                      <img src={course.thumbnailUrl} alt="" className={styles.courseThumbImg} />
+                    </div>
+                  )}
                   <div className={styles.courseHeader}>
                     <div>
                       <h3>{course.title}</h3>
@@ -194,6 +250,75 @@ export default function InstructorDashboard() {
             </div>
           </Card>
         </div>
+
+        {/* Create Course Modal */}
+        {showCreateModal && (
+          <div className={styles.modalOverlay} onClick={() => !createSubmitting && setShowCreateModal(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2>Create New Course</h2>
+                <button type="button" className={styles.modalClose} onClick={() => !createSubmitting && setShowCreateModal(false)} aria-label="Close">
+                  <FiX />
+                </button>
+              </div>
+              <form onSubmit={handleCreateCourse} className={styles.modalForm}>
+                {createError && <p className={styles.modalError}>{createError}</p>}
+                <label>
+                  Title <span className={styles.required}>*</span>
+                  <input
+                    type="text"
+                    value={createTitle}
+                    onChange={(e) => setCreateTitle(e.target.value)}
+                    placeholder="Course title"
+                    required
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={createDescription}
+                    onChange={(e) => setCreateDescription(e.target.value)}
+                    placeholder="Brief description"
+                    rows={3}
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Subject <span className={styles.required}>*</span>
+                  <select
+                    value={createSubjectId}
+                    onChange={(e) => setCreateSubjectId(e.target.value)}
+                    required
+                    className={styles.input}
+                  >
+                    <option value="">Select subject</option>
+                    {allSubjects.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Cover image (optional, stored in Cloudinary)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setCreateThumbnail(e.target.files?.[0] ?? null)}
+                    className={styles.input}
+                  />
+                </label>
+                <div className={styles.modalActions}>
+                  <Button type="button" variant="outline" onClick={() => !createSubmitting && setShowCreateModal(false)} disabled={createSubmitting}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={createSubmitting}>
+                    {createSubmitting ? 'Creating…' : 'Create Course'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

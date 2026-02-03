@@ -42,12 +42,10 @@ export default function Register() {
         setIsLoading(true);
 
         try {
-            const registrationData: any = { name, email, password, role };
-            if (role === 'STUDENT') {
-                registrationData.level = level;
-                registrationData.subject = subject;
-            }
-            await register(registrationData);
+            // Pass arguments in the order AuthContext expects: (name, email, password, role?, levelId?)
+            // levelId is optional; backend accepts undefined (use seeded levels or add level lookup later)
+            const levelId = undefined;
+            await register(name, email, password, role, levelId);
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {

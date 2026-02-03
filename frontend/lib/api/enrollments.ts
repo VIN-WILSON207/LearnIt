@@ -28,11 +28,28 @@ export interface CreateEnrollmentRequest {
   courseId: string;
 }
 
+/** Enrollment with student info (for instructor's students list) */
+export interface InstructorEnrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+  student: { id: string; name: string; email: string };
+  course: { id: string; title: string };
+}
+
 /**
  * Get all enrollments (authenticated)
  */
 export async function getEnrollments(): Promise<Enrollment[]> {
   return apiClient.get<Enrollment[]>('/api/enrollments');
+}
+
+/**
+ * Get students enrolled in an instructor's courses (authenticated, INSTRUCTOR or ADMIN)
+ */
+export async function getStudentsByInstructor(instructorId: string): Promise<InstructorEnrollment[]> {
+  return apiClient.get<InstructorEnrollment[]>(`/api/enrollments/instructor/${instructorId}`);
 }
 
 /**

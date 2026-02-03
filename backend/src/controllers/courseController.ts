@@ -15,7 +15,9 @@ const deleteFile = (filePath: string) => {
 export const createCourse = async (req: Request, res: Response) => {
     try {
         const { title, description, subjectId, instructorId } = req.body;
-        // Basic validation
+        // For local storage, store relative path; for Cloudinary it would be the full URL
+        const thumbnailUrl = (req as any).file ? `/uploads/${(req as any).file.filename}` : null;
+
         if (!title || !subjectId || !instructorId) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -23,10 +25,15 @@ export const createCourse = async (req: Request, res: Response) => {
         const course = await prisma.course.create({
             data: {
                 title,
-                description,
+                description: description || null,
+                thumbnailUrl,
                 subjectId,
                 instructorId,
-            }
+            },
+            include: {
+                subject: true,
+                instructor: { select: { name: true } },
+            },
         });
         res.status(201).json(course);
     } catch (error) {
@@ -37,15 +44,16 @@ export const createCourse = async (req: Request, res: Response) => {
 export const uploadLesson = async (req: Request, res: Response) => {
     try {
         const { courseId, title, content, orderNumber, isFree } = req.body;
-        const file = req.file; 
+        const file = req.file;
 
         if (!courseId || !title) {
-                      return res.status(400).json({ error: 'Missing required fields' });
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         let videoUrl = null;
         if (file) {
-            videoUrl = file.path;
+            // For local storage, store relative path
+            videoUrl = `/uploads/${file.filename}`;
         }
 
         const lesson = await prisma.lesson.create({
@@ -115,5 +123,51 @@ export const getAllCourses = async (req: Request, res: Response) => {
         res.json(courses);
     } catch (error) {
         handleError(error, res, 500, 'Failed to fetch courses');
+    }
+};
+
+export const publishCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const course = await prisma.course.update({
+            where: { id: String(id) },
+            data: { isPublished: true },
+            include: {
+                subject: true,
+                instructor: { select: { name: true } },
+            },
+        });
+        res.json(course);
+    } catch (error) {
+        handleError(error, res, 500, 'Failed to publish course');
+    }
+};
+
+export const unpublishCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const course = await prisma.course.update({
+            where: { id: String(id) },
+            data: { isPublished: false },
+            include: {
+                subject: true,
+                instructor: { select: { name: true } },
+            },
+        });
+        res.json(course);
+    } catch (error) {
+        handleError(error, res, 500, 'Failed to unpublish course');
+    }
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        await prisma.course.delete({
+            where: { id: String(id) },
+        });
+        res.json({ message: 'Course deleted successfully' });
+    } catch (error) {
+        handleError(error, res, 500, 'Failed to delete course');
     }
 };

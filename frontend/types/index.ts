@@ -256,6 +256,7 @@ export interface BackendCourse {
   id: string;
   title: string;
   description: string | null;
+  thumbnailUrl?: string | null;
   subjectId: string;
   instructorId: string;
   isPublished: boolean;

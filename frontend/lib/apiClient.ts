@@ -231,6 +231,42 @@ const apiClient = {
   },
 
   /**
+   * PATCH request
+   */
+  async patch<T>(endpoint: string, data?: any, options: RequestInit = {}): Promise<T> {
+    const token = tokenManager.getToken();
+    const url = `${API_BASE_URL}${endpoint}`;
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetchWithTimeout(url, {
+        ...options,
+        method: 'PATCH',
+        headers,
+        body: data ? JSON.stringify(data) : undefined,
+      });
+
+      return handleResponse<T>(response);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Network error',
+        0
+      );
+    }
+  },
+
+  /**
    * DELETE request
    */
   async delete<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
