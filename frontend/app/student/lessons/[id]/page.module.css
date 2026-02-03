@@ -1,0 +1,86 @@
+.container {
+     max-width: 1000px;
+     margin: 0 auto;
+     padding: 2rem;
+}
+
+.videoSection {
+     margin-bottom: 2rem;
+     background: #000;
+     border-radius: 1rem;
+     overflow: hidden;
+     aspect-ratio: 16 / 9;
+}
+
+.videoWrapper {
+     width: 100%;
+     height: 100%;
+}
+
+.video {
+     width: 100%;
+     height: 100%;
+}
+
+.noVideo {
+     width: 100%;
+     height: 100%;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     background: var(--bg-card);
+     color: var(--text-muted);
+}
+
+.contentSection {
+     display: flex;
+     flex-direction: column;
+     gap: 2rem;
+}
+
+.breadcrumb {
+     display: flex;
+     gap: 0.5rem;
+     font-size: 0.875rem;
+     color: var(--text-muted);
+     margin-bottom: 0.5rem;
+}
+
+.breadcrumb span:first-child {
+     cursor: pointer;
+     color: var(--primary);
+}
+
+.breadcrumb span:first-child:hover {
+     text-decoration: underline;
+}
+
+.header h1 {
+     font-size: 2rem;
+}
+
+.lessonContent {
+     padding: 2.5rem !important;
+     line-height: 1.8;
+     font-size: 1.125rem;
+}
+
+.actions {
+     display: flex;
+     justify-content: space-between;
+     margin-top: 1rem;
+}
+
+.loading,
+.error {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     min-height: 50vh;
+     font-size: 1.25rem;
+}
+
+.error {
+     color: var(--error);
+}

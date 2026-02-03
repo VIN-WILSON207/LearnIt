@@ -5,24 +5,7 @@
  */
 
 import apiClient from '../apiClient';
-
-export interface Enrollment {
-  id: string;
-  studentId: string;
-  courseId: string;
-  enrolledAt: string;
-  course?: {
-    id: string;
-    title: string;
-    subject?: {
-      id: string;
-      name: string;
-    };
-    instructor?: {
-      name: string;
-    };
-  };
-}
+import { BackendCourse, Enrollment } from '@/types';
 
 export interface CreateEnrollmentRequest {
   courseId: string;
