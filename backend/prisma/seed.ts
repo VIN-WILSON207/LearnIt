@@ -1,4 +1,3 @@
-
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -23,24 +22,22 @@ async function main() {
     const ol = await prisma.level.upsert({
         where: { name: 'Ordinary Level' },
         update: {},
-        create: { name: 'Ordinary Level', description: 'Grade 10-11' },
+        create: { name: 'Ordinary Level', description: 'O-Level' },
     });
 
     const al = await prisma.level.upsert({
         where: { name: 'Advanced Level' },
         update: {},
-        create: { name: 'Advanced Level', description: 'Grade 12-13' },
+        create: { name: 'Advanced Level', description: 'A-Level' },
     });
 
     console.log({ ol, al });
 
     // 3. Create Subjects
     const subjects = [
-        { name: 'ICT', code: 'ICT-001', levelId: ol.id },
-        { name: 'Mathematics', code: 'MAT-001', levelId: ol.id },
-        { name: 'Science', code: 'SCI-001', levelId: ol.id },
-        { name: 'ICT', code: 'ICT-002', levelId: al.id },
-        { name: 'Computer Science', code: 'CS-001', levelId: al.id },
+        { name: 'Computer Science', code: 'CS-OL', levelId: ol.id },
+        { name: 'Computer Science', code: 'CS-AL', levelId: al.id },
+        { name: 'ICT', code: 'ICT-AL', levelId: al.id },
     ];
 
     for (const sub of subjects) {
@@ -50,39 +47,21 @@ async function main() {
             create: sub,
         });
     }
-    // 4. Create Plans
-    const freePlan = await prisma.plan.upsert({
-        where: { name: 'Free' },
-        update: {},
-        create: { name: 'Free', price: 0, duration: 0 },
-    });
 
+    // 4. Create Plans
     const basicPlan = await prisma.plan.upsert({
         where: { name: 'Basic' },
         update: {},
-        create: { name: 'Basic', price: 10, duration: 1 },
+        create: { name: 'Basic', price: 500, duration: 1 },
     });
 
     const proPlan = await prisma.plan.upsert({
         where: { name: 'Pro' },
         update: {},
-        create: { name: 'Pro', price: 20, duration: 1 },
+        create: { name: 'Pro', price: 1000, duration: 1 },
     });
 
-    // Student-discounted plans
-    const studentBasicPlan = await prisma.plan.upsert({
-        where: { name: 'Student Basic' },
-        update: {},
-        create: { name: 'Student Basic', price: 5, duration: 1 },
-    });
-
-    const studentProPlan = await prisma.plan.upsert({
-        where: { name: 'Student Pro' },
-        update: {},
-        create: { name: 'Student Pro', price: 10, duration: 1 },
-    });
-
-    console.log({ freePlan, basicPlan, proPlan, studentBasicPlan, studentProPlan });
+    console.log({ basicPlan, proPlan });
     console.log('Seeding completed.');
 }
 
@@ -93,5 +72,6 @@ main()
     .catch(async (e) => {
         console.error(e);
         await prisma.$disconnect();
+        // @ts-ignore 
         process.exit(1);
     });

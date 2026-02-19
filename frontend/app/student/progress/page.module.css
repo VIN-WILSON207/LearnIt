@@ -189,9 +189,27 @@
     gap: 1rem;
   }
 
+  .summaryCard {
+    gap: 1rem;
+  }
+
+  .summaryIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.35rem;
+  }
+
+  .summaryValue {
+    font-size: 1.5rem;
+  }
+
   .progressHeader {
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .progressItem {
+    padding: 1rem;
   }
 
   .progressStats {
@@ -201,5 +219,13 @@
 
   .statsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .statBox {
+    padding: 1.25rem;
+  }
+
+  .statNumber {
+    font-size: 2rem;
   }
 }

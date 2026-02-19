@@ -1,12 +1,7 @@
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import dotenv from 'dotenv';
-
-// IMPORTANT: CommonJS require
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const CloudinaryStorage = require('multer-storage-cloudinary');
-
-dotenv.config();
+const CloudinaryStorageModule = require('multer-storage-cloudinary');
+const CloudinaryStorage = CloudinaryStorageModule.CloudinaryStorage || CloudinaryStorageModule;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,14 +9,18 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'learnit_courses',
-    resource_type: 'auto',
-  },
+export { cloudinary };
+
+// Use memory storage to handle file in controller
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  }
 });
 
-const upload = multer({ storage });
+
 
 export default upload;

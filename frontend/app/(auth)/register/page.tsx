@@ -1,40 +1,85 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import styles from '../login/page.module.css';
 
+type Subject = {
+    id: string;
+    name: string;
+};
+
+type Level = {
+    id: string;
+    name: string;
+    subjects?: Subject[];
+};
+
 export default function Register() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState<UserRole>('STUDENT');
-    const [level, setLevel] = useState<'AL' | 'OL'>('AL');
-    const [subject, setSubject] = useState('ICT');
+    const [levelId, setLevelId] = useState('');
+    const [subjectId, setSubjectId] = useState('');
+    const [levels, setLevels] = useState<Level[]>([]);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const { register, user } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in
     useEffect(() => {
         if (user) {
             router.push(`/${user.role.toLowerCase()}/dashboard`);
         }
     }, [user, router]);
 
-    // Update subject when level changes
     useEffect(() => {
-        if (level === 'OL') {
-            setSubject('Computer Science');
-        } else if (level === 'AL') {
-            setSubject('ICT');
+        const fetchConfig = async () => {
+            try {
+                const res = await fetch('/api/auth/register-config');
+                if (res.ok) {
+                    const data = (await res.json()) as Level[];
+                    setLevels(data);
+                    if (Array.isArray(data) && data.length > 0) {
+                        setLevelId(data[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch register config:', err);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    const selectedLevel = levels.find(l => l.id === levelId);
+    const isOrdinaryLevel = selectedLevel?.name === 'Ordinary Level';
+
+    const allowedSubjects = useMemo<Subject[]>(() => {
+        const subjects = selectedLevel?.subjects || [];
+        const allowedNames = isOrdinaryLevel
+            ? ['Computer Science']
+            : ['Computer Science', 'ICT'];
+
+        const filtered = subjects.filter((subject) => allowedNames.includes(subject.name));
+        const uniqueByName = new Map(filtered.map((subject) => [subject.name, subject]));
+        return Array.from(uniqueByName.values());
+    }, [selectedLevel, isOrdinaryLevel]);
+
+    useEffect(() => {
+        if (allowedSubjects.length === 0) {
+            return;
         }
-    }, [level]);
+
+        const isCurrentAllowed = allowedSubjects.some((subject) => subject.id === subjectId);
+        if (!isCurrentAllowed) {
+            setSubjectId(allowedSubjects[0].id);
+        }
+    }, [levelId, allowedSubjects, subjectId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,12 +89,13 @@ export default function Register() {
         try {
             const registrationData: any = { name, email, password, role };
             if (role === 'STUDENT') {
-                registrationData.level = level;
-                registrationData.subject = subject;
+                registrationData.levelId = levelId;
+                registrationData.subjectId = subjectId;
             }
             await register(registrationData);
-        } catch (err: any) {
-            setError(err.message || 'Registration failed. Please try again.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -118,19 +164,19 @@ export default function Register() {
                             </select>
                         </div>
 
-                        {/* Show level & subject only if role is STUDENT */}
                         {role === 'STUDENT' && (
                             <>
                                 <div className={styles.formGroup}>
                                     <label htmlFor="level">Level</label>
                                     <select
                                         id="level"
-                                        value={level}
-                                        onChange={(e) => setLevel(e.target.value as 'AL' | 'OL')}
+                                        value={levelId}
+                                        onChange={(e) => setLevelId(e.target.value)}
                                         className={styles.select}
                                     >
-                                        <option value="AL">Advanced Level</option>
-                                        <option value="OL">Ordinary Level</option>
+                                        {levels.map(l => (
+                                            <option key={l.id} value={l.id}>{l.name}</option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -138,19 +184,14 @@ export default function Register() {
                                     <label htmlFor="subject">Subject</label>
                                     <select
                                         id="subject"
-                                        value={subject}
-                                        onChange={(e) => setSubject(e.target.value)}
+                                        value={subjectId}
+                                        onChange={(e) => setSubjectId(e.target.value)}
                                         className={styles.select}
+                                        disabled={isOrdinaryLevel}
                                     >
-                                        {level === 'AL' && (
-                                            <>
-                                                <option value="ICT">ICT</option>
-                                                <option value="Computer Science">Computer Science</option>
-                                            </>
-                                        )}
-                                        {level === 'OL' && (
-                                            <option value="Computer Science">Computer Science</option>
-                                        )}
+                                        {allowedSubjects.map((s) => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </>

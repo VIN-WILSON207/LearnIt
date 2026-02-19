@@ -1,0 +1,563 @@
+/* Layout */
+.instructorLayout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  min-height: calc(100vh - 80px);
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 6px 18px rgba(14, 30, 37, 0.06);
+  position: sticky;
+  top: 1rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.2rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.sidebar nav {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.navMenu {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.navItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.navItem:hover {
+  background: rgba(0, 102, 204, 0.05);
+  color: var(--text-primary);
+}
+
+.navItem.active {
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+  border-left: 3px solid var(--primary);
+  padding-left: calc(1.5rem - 3px);
+  font-weight: 500;
+}
+
+.sidebarFooter {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.userSummary {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Mobile Navigation */
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 90px;
+  right: 1rem;
+  z-index: 1300;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+}
+
+.mobileMenuButton:hover {
+  transform: scale(1.05);
+}
+
+.mobileMenuButton:active {
+  transform: scale(0.95);
+}
+
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+}
+
+/* Header */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.headerRow h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.sub {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+}
+
+.statContent {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 102, 204, 0.1);
+  border-radius: 8px;
+  font-size: 1.5rem;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Sections */
+.section {
+  margin-bottom: 3rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Courses */
+.coursesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.courseItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.courseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.courseHeader h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.courseHeader p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.courseMeta {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.courseBadge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+}
+
+.courseStats {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0;
+}
+
+.courseActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.courseActions button {
+  flex-grow: 1;
+  min-width: 80px;
+}
+
+/* Tables */
+.tableCard {
+  overflow: hidden;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: var(--secondary);
+}
+
+.table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: var(--secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #0052a3);
+  transition: width 0.3s ease;
+}
+
+/* Community */
+.communityHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.communityDesc {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.recentThreads {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.threadPreview {
+  padding: 1rem;
+  border-left: 4px solid var(--primary);
+}
+
+.threadPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.threadPreviewHeader h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.threadAuthor {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.threadPreviewContent {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.threadPreviewFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+}
+
+.threadDate {
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+  }
+
+  .courseHeader {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobileMenuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileOverlay {
+    display: block;
+  }
+
+  .instructorLayout {
+    padding: 1rem;
+    padding-top: 4rem;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    height: 100vh;
+    width: 280px;
+    z-index: 1200;
+    transition: left 0.3s ease-in-out;
+    max-height: 100vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: none;
+  }
+
+  .sidebarOpen {
+    left: 0;
+  }
+
+  .brand {
+    color: white;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.2rem;
+  }
+
+  .navItem {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .navItem:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+  }
+
+  .navItem.active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    border-left: 3px solid white;
+    font-weight: 600;
+    padding-left: calc(1rem - 3px);
+  }
+
+  .sidebarFooter {
+    border-top: 1px dashed rgba(255, 255, 255, 0.3);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .userSummary {
+    color: white;
+    font-size: 0.9rem;
+  }
+
+  .roleBadge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .main {
+    width: 100%;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .headerActions button {
+    flex: 1;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .courseStats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .courseActions {
+    flex-direction: column;
+  }
+
+  .courseActions button {
+    width: 100%;
+  }
+
+  .communityHeader {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .table {
+    font-size: 0.85rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem;
+  }
+}

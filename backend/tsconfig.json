@@ -2,19 +2,31 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "Node", 
-    "rootDir": "./",             
+    "moduleResolution": "Node",
+    "rootDir": "./",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     "paths": {
-      "*": ["node_modules/*", "src/*"]
+      "*": [
+        "node_modules/*",
+        "src/*"
+      ]
     }
   },
-  "include": ["src/**/*", "prisma.config.ts"], 
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*",
+    "prisma.config.ts",
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

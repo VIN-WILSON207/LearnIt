@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 
+const BACKEND_BASE = process.env.BACKEND_BASE || 'http://localhost:4000';
+
 export async function GET() {
     try {
-        const backendResponse = await fetch('http://localhost:4000/api/auth/config', {
+        const backendResponse = await fetch(`${BACKEND_BASE}/api/auth/config`, {
             headers: {
                 'Content-Type': 'application/json',
             },

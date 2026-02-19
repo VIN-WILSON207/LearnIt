@@ -1,0 +1,14 @@
+.descriptionList {
+  margin: 0 0 0.75rem 0;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.descriptionItem {
+  margin: 0;
+}

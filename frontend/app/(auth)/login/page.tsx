@@ -19,7 +19,9 @@ export default function Login() {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      router.push(`/${user.role.toLowerCase()}/dashboard`);
+      if (user && user.role) {
+        router.push(`/${user.role.toLowerCase()}/dashboard`);
+      }
     }
   }, [user, router]);
 
@@ -83,6 +85,9 @@ export default function Login() {
             <div className={styles.footerLink}>
               <p className={styles.link}>
                 Don't have an account? <a href="/register">Sign Up</a>
+              </p>
+              <p className={styles.link}>
+                <a href="/forgot-password">Forgot Password?</a>
               </p>
             </div>
           </form>

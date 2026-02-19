@@ -5,36 +5,55 @@ import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
-import { mockCourses, mockEnrollments } from '@/lib/mockData';
 import styles from './page.module.css';
 import { FiTrendingUp, FiAward } from 'react-icons/fi';
+import { StudentLayout } from '@/components/StudentLayout';
 
 export default function ProgressPage() {
   const { user } = useAuth();
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalHours: 0, completedCourses: 0, inProgress: 0 });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      const studentEnrollments = mockEnrollments.filter(e => e.studentId === user.id);
-      setEnrollments(studentEnrollments);
+    if (!user) return;
 
-      const totalHours = studentEnrollments.reduce((sum, e) => sum + e.hoursCompleted, 0);
-      const completed = studentEnrollments.filter(e => e.status === 'completed').length;
-      const inProgress = studentEnrollments.filter(e => e.status === 'in-progress').length;
+    const fetchEnrollments = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/enrollments?studentId=${user.id}`, {
+          headers: { Authorization: token ? `Bearer ${token}` : '' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEnrollments(data);
 
-      setStats({ totalHours, completedCourses: completed, inProgress });
-    }
+          const totalHours = data.reduce((sum: number, e: any) => sum + (e.hoursCompleted || 0), 0);
+          const completed = data.filter((e: any) => e.status === 'completed').length;
+          const inProgress = data.filter((e: any) => e.status === 'in-progress').length;
+
+          setStats({ totalHours, completedCourses: completed, inProgress });
+        }
+      } catch (err) {
+        console.error('Failed to load progress', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnrollments();
   }, [user]);
 
   return (
     <ProtectedRoute requiredRole="student">
       <Navbar />
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1>Your Learning Progress</h1>
-          <p>Track your course completion and learning achievements</p>
-        </div>
+      <StudentLayout active="progress">
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <h1>Your Learning Progress</h1>
+            <p>Track your course completion and learning achievements</p>
+          </div>
 
         {/* Progress Summary */}
         <div className={styles.summaryGrid}>
@@ -73,45 +92,50 @@ export default function ProgressPage() {
         <div className={styles.section}>
           <h2>Course Progress Details</h2>
           <div className={styles.progressList}>
-            {enrollments.map(enrollment => {
-              const course = mockCourses.find(c => c.id === enrollment.courseId);
-              const percentage = enrollment.progress;
-              
-              return (
-                <Card key={enrollment.id} className={styles.progressItem}>
-                  <div className={styles.progressHeader}>
-                    <h3>{course?.title}</h3>
-                    <span className={`${styles.statusBadge} ${styles[enrollment.status]}`}>
-                      {enrollment.status === 'completed' ? '✓ Completed' : 'In Progress'}
-                    </span>
-                  </div>
+            {loading ? (
+              <Card><p>Loading progress...</p></Card>
+            ) : enrollments.length === 0 ? (
+              <Card><p>No enrolled courses yet</p></Card>
+            ) : (
+              enrollments.map(enrollment => {
+                const percentage = enrollment.progress || 0;
 
-                  <div className={styles.progressBar}>
-                    <div 
-                      className={styles.progressFill}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-
-                  <div className={styles.progressStats}>
-                    <div className={styles.stat}>
-                      <span className={styles.label}>Progress</span>
-                      <span className={styles.value}>{percentage}%</span>
-                    </div>
-                    <div className={styles.stat}>
-                      <span className={styles.label}>Hours</span>
-                      <span className={styles.value}>
-                        {enrollment.hoursCompleted} / {course?.hours}
+                return (
+                  <Card key={enrollment.id} className={styles.progressItem}>
+                    <div className={styles.progressHeader}>
+                      <h3>{enrollment.courseId}</h3>
+                      <span className={`${styles.statusBadge} ${styles[enrollment.status]}`}>
+                        {enrollment.status === 'completed' ? '✓ Completed' : 'In Progress'}
                       </span>
                     </div>
-                    <div className={styles.stat}>
-                      <span className={styles.label}>Enrolled</span>
-                      <span className={styles.value}>{enrollment.enrolledDate}</span>
+
+                    <div className={styles.progressBar}>
+                      <div
+                        className={styles.progressFill}
+                        style={{ width: `${percentage}%` }}
+                      />
                     </div>
-                  </div>
-                </Card>
-              );
-            })}
+
+                    <div className={styles.progressStats}>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Progress</span>
+                        <span className={styles.value}>{percentage}%</span>
+                      </div>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Hours</span>
+                        <span className={styles.value}>
+                          {enrollment.hoursCompleted || 0} / {enrollment.totalHours || 0}
+                        </span>
+                      </div>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Enrolled</span>
+                        <span className={styles.value}>{enrollment.enrolledDate}</span>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -129,7 +153,7 @@ export default function ProgressPage() {
             </Card>
             <Card className={styles.statBox}>
               <div className={styles.statNumber}>
-                {enrollments.length > 0 
+                {enrollments.length > 0
                   ? Math.round((stats.completedCourses / enrollments.length) * 100)
                   : 0}%
               </div>
@@ -137,7 +161,8 @@ export default function ProgressPage() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
+      </StudentLayout>
     </ProtectedRoute>
   );
 }
