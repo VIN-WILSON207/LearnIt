@@ -3,9 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import prisma from '../lib/prisma';
-if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined');
-}
+import { handleError } from '../utils/errorHandler';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_BASE = process.env.FRONTEND_BASE || 'http://localhost:3000';
@@ -60,7 +58,8 @@ export const getRegistrationConfig = async (req: Request, res: Response) => {
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, role, levelId, subjectId } = req.body;
+        console.log('Registration request body:', req.body);
+        const { name, email, password, role, levelId } = req.body;
 
         if (!email || !password || !name) {
             res.status(400).json({ error: 'Missing required fields' });
@@ -75,52 +74,12 @@ export const register = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        let resolvedLevelId: string | undefined;
-        let resolvedSubjectId: string | undefined;
-
-        if ((role || 'STUDENT') === 'STUDENT') {
-            if (!levelId) {
-                res.status(400).json({ error: 'Level is required for students' });
-                return;
-            }
-
-            const level = await prisma.level.findUnique({
-                where: { id: levelId },
-                include: { subjects: true },
-            });
-
-            if (!level) {
-                res.status(400).json({ error: 'Invalid level selected' });
-                return;
-            }
-
-            const allowedSubjectsByLevel: Record<string, string[]> = {
-                'Ordinary Level': ['Computer Science'],
-                'Advanced Level': ['Computer Science', 'ICT'],
-            };
-
-            const allowedNames = allowedSubjectsByLevel[level.name] || [];
-            const allowedSubjects = level.subjects.filter((subject) => allowedNames.includes(subject.name));
-
-            if (allowedSubjects.length === 0) {
-                res.status(400).json({ error: 'No valid subjects available for the selected level' });
-                return;
-            }
-
-            if (level.name === 'Ordinary Level') {
-                resolvedLevelId = level.id;
-                resolvedSubjectId = allowedSubjects[0]?.id;
-            } else {
-                const requestedSubject = allowedSubjects.find((subject) => subject.id === subjectId)
-                    || allowedSubjects.find((subject) => subject.name === 'Computer Science');
-                if (!requestedSubject) {
-                    res.status(400).json({ error: 'Invalid subject selected for the chosen level' });
-                    return;
-                }
-                resolvedLevelId = level.id;
-                resolvedSubjectId = requestedSubject.id;
-            }
-        }
+        console.log('Creating user with data:', {
+            name,
+            email,
+            role: role || 'STUDENT',
+            levelId
+        });
 
         const user = await prisma.user.create({
             data: {
@@ -128,8 +87,7 @@ export const register = async (req: Request, res: Response) => {
                 email,
                 password: hashedPassword,
                 role: role || 'STUDENT',
-                level: resolvedLevelId ? { connect: { id: resolvedLevelId } } : undefined,
-                subject: resolvedSubjectId ? { connect: { id: resolvedSubjectId } } : undefined,
+                levelId: levelId || undefined,
             },
             include: {
                 level: true,
@@ -165,8 +123,7 @@ export const register = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Registration failed' });
+        handleError(error, res, 500, 'Registration failed');
     }
 };
 
@@ -218,8 +175,7 @@ export const login = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error('Login failed:', error);
-        res.status(500).json({ error: 'Login failed' });
+        handleError(error, res, 500, 'Login failed');
     }
 };
 

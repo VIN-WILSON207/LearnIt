@@ -1,21 +1,11 @@
 import { Router } from 'express';
-import {
-    createEnrollment,
-    getUserEnrollments,
-    getCourseEnrollments,
-    removeEnrollment,
-    getAllEnrollments,
-    getInstructorEnrollments,
-} from '../controllers/enrollmentController';
-import { authenticate, authorize } from '../middleware/auth';
+import { getEnrollments, enrollInCourse, getStudentsByInstructor } from '../controllers/enrollmentController';
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/', authenticate, createEnrollment);
-router.get('/', authenticate, authorize('ADMIN'), getAllEnrollments);
-router.get('/user/:studentId', authenticate, getUserEnrollments);
-router.get('/instructor/:instructorId', authenticate, authorize('INSTRUCTOR', 'ADMIN'), getInstructorEnrollments);
-router.get('/course/:courseId', authenticate, getCourseEnrollments);
-router.delete('/:enrollmentId', authenticate, removeEnrollment);
+router.get('/', authenticate, getEnrollments);
+router.get('/instructor/:instructorId', authenticate, getStudentsByInstructor);
+router.post('/', authenticate, enrollInCourse);
 
 export default router;

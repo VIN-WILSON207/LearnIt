@@ -92,6 +92,23 @@
   cursor: not-allowed;
 }
 
+.signupLink {
+  text-align: center;
+  margin-top: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.signupLink a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signupLink a:hover {
+  text-decoration: underline;
+}
+
 .error {
   background-color: #fee;
   border: 1px solid #fcc;

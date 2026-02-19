@@ -1,424 +1,555 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { useRouter } from 'next/navigation';
+import { getInstructorCourses, createCourse, uploadLesson } from '@/lib/api/courses';
+import { getQuiz, submitQuiz } from '@/lib/api/quizzes'; // Note: Need a createQuiz api
+import { getEnrollments } from '@/lib/api/enrollments';
+import { getRegistrationConfig, LevelWithSubjects } from '@/lib/api/auth';
+import { BackendCourse } from '@/types';
 import styles from './page.module.css';
-import { FiUsers, FiBook, FiBarChart2, FiMessageCircle, FiMenu, FiX } from 'react-icons/fi';
-
-const TABS = ['Overview', 'Courses', 'Students', 'Analytics', 'Community', 'Support'] as const;
-type Tab = (typeof TABS)[number];
+import { FiUsers, FiBook, FiBarChart2, FiX, FiPlus, FiVideo, FiFileText } from 'react-icons/fi';
 
 export default function InstructorDashboard() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>('Overview');
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const [courses, setCourses] = useState<any[]>([]);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const [courses, setCourses] = useState<BackendCourse[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalCourses, setTotalCourses] = useState(0);
-  const [activeCourses, setActiveCourses] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [threads, setThreads] = useState<any[] | null>(null);
-  const [tickets, setTickets] = useState<any[] | null>(null);
 
-  // Fetch courses and enrollments on mount
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: token ? `Bearer ${token}` : '' };
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [levelsWithSubjects, setLevelsWithSubjects] = useState<LevelWithSubjects[]>([]);
+  const [createTitle, setCreateTitle] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [createSubjectId, setCreateSubjectId] = useState('');
+  const [createThumbnail, setCreateThumbnail] = useState<File | null>(null);
+  const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
 
-        // Fetch courses
-        const coursesRes = await fetch('/api/courses', { headers });
-        if (coursesRes.ok) {
-          const coursesData = await coursesRes.json();
-          const normalizedCourses = (coursesData || []).map((c: any) => ({
-            ...c,
-            status: c.isPublished ? 'published' : 'pending',
-            lessonsCount: c?._count?.lessons ?? c?.lessons?.length ?? 0,
-          }));
-          setCourses(normalizedCourses);
-          setTotalCourses(normalizedCourses.length);
-          setActiveCourses(normalizedCourses.filter((c: any) => c.isPublished).length);
-        }
+  // Lesson modal states
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [lessonTitle, setLessonTitle] = useState('');
+  const [lessonContent, setLessonContent] = useState('');
+  const [lessonVideo, setLessonVideo] = useState<File | null>(null);
+  const [lessonSubmitting, setLessonSubmitting] = useState(false);
 
-        // Fetch enrollments to count students
-        const enrollmentsRes = await fetch(`/api/enrollments?instructorId=${user?.id || ''}`, { headers });
-        if (enrollmentsRes.ok) {
-          const enrollmentsData = await enrollmentsRes.json();
-          setEnrollments(enrollmentsData || []);
-          const studentIds = new Set<string>();
-          (enrollmentsData || []).forEach((e: any) => studentIds.add(e.studentId));
-          setTotalStudents(studentIds.size);
-        }
-      } catch (err) {
-        console.error('Error fetching initial data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Quiz modal states
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [passMark, setPassMark] = useState(70);
+  const [quizQuestions, setQuizQuestions] = useState([{ text: '', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }] }]);
+  const [quizSubmitting, setQuizSubmitting] = useState(false);
 
-    fetchData();
-  }, []);
-
-  // Load data for specific tabs
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: token ? `Bearer ${token}` : '' };
+    setIsLoading(true);
+    setError(null);
+    try {
+      const instructorCourses = await getInstructorCourses(user.id);
+      setCourses(instructorCourses);
+      setTotalCourses(instructorCourses.length);
+      const allEnrollments = await getEnrollments();
+      const studentIds = new Set<string>();
+      instructorCourses.forEach((course) => {
+        allEnrollments.forEach((enrollment) => {
+          if (enrollment.courseId === course.id) {
+            studentIds.add(enrollment.studentId);
+          }
+        });
+      });
+      setTotalStudents(studentIds.size);
+    } catch (err) {
+      console.error('Failed to fetch instructor data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
-    const loadTabData = async () => {
-      try {
-        if (activeTab === 'Community') {
-          const res = await fetch('/api/forum', { headers });
-          setThreads(res.ok ? await res.json() : []);
-        }
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-        if (activeTab === 'Support') {
-          // Support tab no longer loads data from API
-          // Users go to dedicated support page
-        }
-      } catch (err) {
-        console.error('Failed to load tab data', err);
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setShowCreateModal(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (showCreateModal && levelsWithSubjects.length === 0) {
+      getRegistrationConfig().then(setLevelsWithSubjects).catch(console.error);
+    }
+  }, [showCreateModal, levelsWithSubjects.length]);
+
+  const allSubjects = levelsWithSubjects.flatMap((l) => l.subjects);
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !createTitle.trim() || !createSubjectId) {
+      setCreateError('Title and subject are required.');
+      return;
+    }
+    setCreateSubmitting(true);
+    setCreateError(null);
+    try {
+      if (editingCourseId) {
+        // We'll need an updateCourse API function, but for now we'll assume createCourse can handle updates if ID is provided or just implement partial update
+        // Since the backend 'POST /' is for new courses, we typically need a 'PATCH /:id'
+        // For now, let's assume we need to add updateCourse to lib/api/courses
+        const { updateCourse } = await import('@/lib/api/courses');
+        await updateCourse(editingCourseId, {
+          title: createTitle.trim(),
+          description: createDescription.trim(),
+          subjectId: createSubjectId,
+          thumbnail: createThumbnail || undefined,
+        });
+      } else {
+        await createCourse({
+          title: createTitle.trim(),
+          description: createDescription.trim() || undefined,
+          subjectId: createSubjectId,
+          instructorId: user.id,
+          thumbnail: createThumbnail || undefined,
+        });
       }
-    };
-
-    loadTabData();
-  }, [activeTab, user]);
-
-  const handleCreateCourse = () => {
-    router.push('/instructor/create-course');
+      setShowCreateModal(false);
+      resetCreateForm();
+      await fetchData();
+    } catch (err: any) {
+      setCreateError(err?.message || 'Failed to create course. Please try again.');
+    } finally {
+      setCreateSubmitting(false);
+    }
   };
 
-  const handleViewCourse = (courseId?: string) => {
-    if (courseId) router.push(`/instructor/courses/${courseId}`);
+  const handleUploadLesson = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCourseId || !lessonTitle.trim()) return;
+    setLessonSubmitting(true);
+    try {
+      const course = courses.find(c => c.id === activeCourseId);
+      const nextOrder = (course?.lessons?.length || 0) + 1;
+      await uploadLesson({
+        courseId: activeCourseId,
+        title: lessonTitle.trim(),
+        content: lessonContent.trim() || undefined,
+        video: lessonVideo || undefined,
+        orderNumber: nextOrder,
+        isFree: false
+      });
+      setShowLessonModal(false);
+      setLessonTitle('');
+      setLessonContent('');
+      setLessonVideo(null);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload lesson');
+    } finally {
+      setLessonSubmitting(false);
+    }
   };
+
+  const resetCreateForm = () => {
+    setCreateTitle('');
+    setCreateDescription('');
+    setCreateSubjectId('');
+    setCreateThumbnail(null);
+    setEditingCourseId(null);
+  };
+
+  const openEditModal = (course: BackendCourse) => {
+    setEditingCourseId(course.id);
+    setCreateTitle(course.title);
+    setCreateDescription(course.description || '');
+    setCreateSubjectId(course.subjectId);
+    setCreateThumbnail(null); // Reset thumbnail as we don't handle editing existing one here
+    setShowCreateModal(true);
+  };
+
+  const openLessonModal = (courseId: string) => {
+    setActiveCourseId(courseId);
+    setShowLessonModal(true);
+  };
+
+  const openQuizModal = (lessonId: string) => {
+    setActiveLessonId(lessonId);
+    setShowQuizModal(true);
+  };
+
+  const handleCreateQuiz = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeLessonId) return;
+    setQuizSubmitting(true);
+    try {
+      // API call to create quiz (assumed to exist or will be added)
+      // await createQuiz({ lessonId: activeLessonId, passMark, questions: quizQuestions });
+      alert('Quiz creation API not fully implemented in backend yet, but UI is ready!');
+      setShowQuizModal(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create quiz');
+    } finally {
+      setQuizSubmitting(false);
+    }
+  };
+
+  const addQuestion = () => {
+    setQuizQuestions([...quizQuestions, { text: '', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }] }]);
+  };
+
+  const updateQuestion = (index: number, text: string) => {
+    const newQs = [...quizQuestions];
+    newQs[index].text = text;
+    setQuizQuestions(newQs);
+  };
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="instructor">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <p>Loading dashboard...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole="instructor">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--error)' }}>
+            <p>{error}</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
-    <ProtectedRoute requiredRole="INSTRUCTOR">
+    <ProtectedRoute requiredRole="instructor">
       <Navbar />
-      <div className={styles.instructorLayout}>
-        {/* Mobile Menu Button */}
-        <button
-          className={styles.mobileMenuButton}
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          {menuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-        </button>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1>Welcome, {user?.name}!</h1>
+          <p>Manage your courses and track student progress</p>
+        </div>
 
-        {/* Mobile Overlay */}
-        {menuOpen && (
-          <div
-            className={styles.mobileOverlay}
-            onClick={() => setMenuOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ''}`}>
-          <div className={styles.brand}>
-            <span>Instructor</span>
-          </div>
-          <nav className={styles.navMenu}>
-            {TABS.map(t => (
-              <button
-                key={t}
-                className={`${styles.navItem} ${activeTab === t ? styles.active : ''}`}
-                onClick={() => {
-                  setActiveTab(t as Tab);
-                  setMenuOpen(false);
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </nav>
-          <div className={styles.sidebarFooter}>
-            <div className={styles.userSummary}>{user?.name}</div>
-            <div className={styles.roleBadge}>Instructor</div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={styles.main}>
-          <div className={styles.content}>
-            {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
-            {loading && <div>Loading...</div>}
-
-            {/* Overview Tab */}
-            {activeTab === 'Overview' && !loading && (
-              <div>
-                <div className={styles.headerRow}>
-                  <div>
-                    <h1>Welcome, {user?.name}!</h1>
-                    <p className={styles.sub}>Manage your courses and track student progress</p>
-                  </div>
-                  <div className={styles.headerActions}>
-                    <Button variant="primary" onClick={handleCreateCourse}>
-                      Create New Course
-                    </Button>
-                  </div>
-                </div>
-
-                <div className={styles.statsGrid}>
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiBook /></div>
-                      <div>
-                        <div className={styles.statLabel}>Courses Created</div>
-                        <div className={styles.statValue}>{totalCourses}</div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiUsers /></div>
-                      <div>
-                        <div className={styles.statLabel}>Total Students</div>
-                        <div className={styles.statValue}>{totalStudents}</div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiBarChart2 /></div>
-                      <div>
-                        <div className={styles.statLabel}>Active Courses</div>
-                        <div className={styles.statValue}>{activeCourses}</div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                <div className={styles.section}>
-                  <h2>Recent Courses</h2>
-                  <div className={styles.coursesList}>
-                    {courses.length === 0 ? (
-                      <Card><p>No courses yet. Start by creating your first course!</p></Card>
-                    ) : (
-                      courses.slice(0, 5).map((course) => (
-                        <Card key={course.id} className={styles.courseItem}>
-                          <div className={styles.courseHeader}>
-                            <div>
-                              <h3>{course.title}</h3>
-                              <p>{course.description}</p>
-                            </div>
-                            <div className={styles.courseMeta}>
-                              <span className={styles.courseBadge}>{course.isPublished ? 'published' : 'pending'}</span>
-                            </div>
-                          </div>
-                          <div className={styles.courseStats}>
-                            <span>{course.enrolledStudents || 0} Students</span>
-                            <span>Lessons: {course.lessonsCount || 0}</span>
-                          </div>
-                          <Button variant="outline" size="small" onClick={() => handleViewCourse(course.id)}>
-                            View Course
-                          </Button>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </div>
+        {/* Stats Cards */}
+        <div className={styles.statsGrid}>
+          <Card className={styles.statCard}>
+            <div className={styles.statContent}>
+              <div className={styles.statIcon}>
+                <FiBook />
               </div>
-            )}
-
-            {/* Courses Tab */}
-            {activeTab === 'Courses' && !loading && (
               <div>
-                <div className={styles.headerRow}>
-                  <h1>My Courses</h1>
-                  <div className={styles.headerActions}>
-                    <Button variant="primary" onClick={handleCreateCourse}>
-                      Create New Course
-                    </Button>
-                  </div>
-                </div>
-
-                <div className={styles.section}>
-                  <div className={styles.coursesList}>
-                    {courses.length === 0 ? (
-                      <Card><p>No courses yet. Start by creating your first course!</p></Card>
-                    ) : (
-                      courses.map((course) => (
-                        <Card key={course.id} className={styles.courseItem}>
-                          <div className={styles.courseHeader}>
-                            <div>
-                              <h3>{course.title}</h3>
-                              <p>{course.description}</p>
-                            </div>
-                            <div className={styles.courseMeta}>
-                              <span className={styles.courseBadge}>{course.isPublished ? 'published' : 'pending'}</span>
-                            </div>
-                          </div>
-                          <div className={styles.courseStats}>
-                            <span>{course.enrolledStudents || 0} Students Enrolled</span>
-                            <span>{course.lessonsCount || 0} Lessons</span>
-                            <span>Rating: {course.rating || 'N/A'}</span>
-                          </div>
-                          <div className={styles.courseActions}>
-                            <Button variant="outline" size="small" onClick={() => handleViewCourse(course.id)}>
-                              View
-                            </Button>
-                            <Button variant="outline" size="small" onClick={() => router.push(`/instructor/courses/${course.id}/edit`)}>
-                              Edit
-                            </Button>
-                            <Button variant="outline" size="small" onClick={() => router.push(`/instructor/courses/${course.id}/analytics`)}>
-                              Analytics
-                            </Button>
-                          </div>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </div>
+                <div className={styles.statLabel}>Courses Created</div>
+                <div className={styles.statValue}>{totalCourses}</div>
               </div>
-            )}
+            </div>
+          </Card>
 
-            {/* Students Tab */}
-            {activeTab === 'Students' && !loading && (
+          <Card className={styles.statCard}>
+            <div className={styles.statContent}>
+              <div className={styles.statIcon}>
+                <FiUsers />
+              </div>
               <div>
-                <div className={styles.headerRow}>
-                  <h1>Students</h1>
-                  <div className={styles.headerActions}>
-                    <Button variant="outline">Export List</Button>
-                  </div>
-                </div>
+                <div className={styles.statLabel}>Total Students</div>
+                <div className={styles.statValue}>{totalStudents}</div>
+              </div>
+            </div>
+          </Card>
 
-                <Card className={styles.tableCard}>
-                  <div className={styles.tableContainer}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>Student ID</th>
-                          <th>Course ID</th>
-                          <th>Progress</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {enrollments.length === 0 ? (
-                          <tr><td colSpan={4}>No student enrollments yet</td></tr>
-                        ) : (
-                          enrollments.slice(0, 10).map((enrollment, idx) => (
-                            <tr key={idx}>
-                              <td>{enrollment.studentId}</td>
-                              <td>{enrollment.courseId}</td>
-                              <td>
-                                <div className={styles.progressBar}>
-                                  <div className={styles.progressFill} style={{ width: `${enrollment.progress}%` }}></div>
-                                </div>
-                              </td>
-                              <td>
-                                <Button variant="outline" size="small" onClick={() => window.open(`/instructor/students/${enrollment.studentId}`, '_blank')}>
-                                  View
-                                </Button>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+          <Card className={styles.statCard}>
+            <div className={styles.statContent}>
+              <div className={styles.statIcon}>
+                <FiBarChart2 />
+              </div>
+              <div>
+                <div className={styles.statLabel}>Published Courses</div>
+                <div className={styles.statValue}>{courses.filter(c => c.isPublished).length}</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Course Management */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>My Courses</h2>
+            <Button variant="primary" onClick={() => setShowCreateModal(true)}>Create New Course</Button>
+          </div>
+
+          <div className={styles.coursesList}>
+            {courses.length === 0 ? (
+              <Card>
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                  <p>No courses yet. Create your first course to get started!</p>
+                </div>
+              </Card>
+            ) : (
+              courses.map((course) => (
+                <Card key={course.id} className={styles.courseItem}>
+                  {course.thumbnailUrl && (
+                    <div className={styles.courseThumb}>
+                      <img
+                        src={course.thumbnailUrl}
+                        alt=""
+                        className={styles.courseThumbImg}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'https://placehold.co/400x225?text=No+Preview';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className={styles.courseHeader}>
+                    <div>
+                      <h3>{course.title}</h3>
+                      <p>{course.description || 'No description'}</p>
+                    </div>
+                    <div className={styles.courseStatus}>
+                      <span className={`${styles.badge} ${course.isPublished ? styles.active : styles.pending}`}>
+                        {course.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.courseStats}>
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Subject:</span>
+                      <span className={styles.value}>{course.subject?.name || 'N/A'}</span>
+                    </div>
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Lessons:</span>
+                      <span className={styles.value}>{course.lessons?.length || 0}</span>
+                    </div>
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Created:</span>
+                      <span className={styles.value}>{new Date(course.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.courseActions}>
+                    <Button variant="outline" onClick={() => router.push(`/student/courses/${course.id}`)}>View Details</Button>
+                    <Button variant="outline" onClick={() => openEditModal(course)}>Edit Course</Button>
+                    <Button variant="outline" onClick={() => openLessonModal(course.id)}>
+                      <FiPlus /> Upload Lesson
+                    </Button>
+                    {course.lessons && course.lessons.length > 0 && (
+                      <div className={styles.courseLessonsList}>
+                        <h4>Lessons</h4>
+                        {course.lessons.map(l => (
+                          <div key={l.id} className={styles.miniLessonItem}>
+                            <span>{l.title}</span>
+                            <Button size="small" variant="outline" onClick={() => openQuizModal(l.id)}>
+                              Add Quiz
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Card>
-              </div>
+              ))
             )}
+          </div>
+        </div>
 
-            {/* Analytics Tab */}
-            {activeTab === 'Analytics' && !loading && (
-              <div>
-                <div className={styles.headerRow}>
-                  <h1>Course Analytics</h1>
-                  <div className={styles.headerActions}>
-                    <Button variant="outline" onClick={() => alert('Export coming soon')}>Export Report</Button>
-                  </div>
+        {/* Lesson Upload Modal */}
+        {showLessonModal && (
+          <div className={styles.modalOverlay} onClick={() => !lessonSubmitting && setShowLessonModal(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2>Upload New Lesson</h2>
+                <button className={styles.modalClose} onClick={() => setShowLessonModal(false)}><FiX /></button>
+              </div>
+              <form onSubmit={handleUploadLesson} className={styles.modalForm}>
+                <label>
+                  Lesson Title <span className={styles.required}>*</span>
+                  <input
+                    type="text"
+                    value={lessonTitle}
+                    onChange={(e) => setLessonTitle(e.target.value)}
+                    required
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Content (Markdown/HTML)
+                  <textarea
+                    value={lessonContent}
+                    onChange={(e) => setLessonContent(e.target.value)}
+                    rows={5}
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Video File
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setLessonVideo(e.target.files?.[0] || null)}
+                    className={styles.input}
+                  />
+                </label>
+                <div className={styles.modalActions}>
+                  <Button type="button" variant="outline" onClick={() => setShowLessonModal(false)}>Cancel</Button>
+                  <Button type="submit" variant="primary" disabled={lessonSubmitting}>
+                    {lessonSubmitting ? 'Uploading...' : 'Upload Lesson'}
+                  </Button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
 
-                <div className={styles.section}>
-                  <h2>Course Performance</h2>
-                  <Card>
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      <p>Analytics data will be displayed here</p>
-                      <p style={{ fontSize: '0.9rem' }}>Connect your courses to view detailed performance metrics</p>
+        {/* Recent Submissions */}
+        <div className={styles.section}>
+          <h2>Recent Student Submissions</h2>
+          <Card>
+            <div className={styles.submissionsList}>
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                No recent submissions
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Create Course Modal */}
+        {showCreateModal && (
+          <div className={styles.modalOverlay} onClick={() => !createSubmitting && setShowCreateModal(false)}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2>{editingCourseId ? 'Edit Course' : 'Create New Course'}</h2>
+                <button type="button" className={styles.modalClose} onClick={() => !createSubmitting && (setShowCreateModal(false), resetCreateForm())} aria-label="Close">
+                  <FiX />
+                </button>
+              </div>
+              <form onSubmit={handleCreateCourse} className={styles.modalForm}>
+                {createError && <p className={styles.modalError}>{createError}</p>}
+                <label>
+                  Title <span className={styles.required}>*</span>
+                  <input
+                    type="text"
+                    value={createTitle}
+                    onChange={(e) => setCreateTitle(e.target.value)}
+                    placeholder="Course title"
+                    required
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={createDescription}
+                    onChange={(e) => setCreateDescription(e.target.value)}
+                    placeholder="Brief description"
+                    rows={3}
+                    className={styles.input}
+                  />
+                </label>
+                <label>
+                  Subject <span className={styles.required}>*</span>
+                  <select
+                    value={createSubjectId}
+                    onChange={(e) => setCreateSubjectId(e.target.value)}
+                    required
+                    className={styles.input}
+                  >
+                    <option value="">Select subject</option>
+                    {allSubjects.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Cover image (optional, stored in Cloudinary)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setCreateThumbnail(e.target.files?.[0] ?? null)}
+                    className={styles.input}
+                  />
+                </label>
+                <div className={styles.modalActions}>
+                  <Button type="button" variant="outline" onClick={() => !createSubmitting && setShowCreateModal(false)} disabled={createSubmitting}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={createSubmitting}>
+                    {createSubmitting ? 'Creating…' : 'Create Course'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Quiz Creation Modal */}
+        {showQuizModal && (
+          <div className={styles.modalOverlay} onClick={() => !quizSubmitting && setShowQuizModal(false)}>
+            <div className={styles.modal} style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2>Create Lesson Quiz</h2>
+                <button className={styles.modalClose} onClick={() => setShowQuizModal(false)}><FiX /></button>
+              </div>
+              <form onSubmit={handleCreateQuiz} className={styles.modalForm}>
+                <label>
+                  Pass Mark (%)
+                  <input
+                    type="number"
+                    value={passMark}
+                    onChange={(e) => setPassMark(parseInt(e.target.value))}
+                    className={styles.input}
+                    min="1"
+                    max="100"
+                  />
+                </label>
+
+                <div className={styles.questionsSetup}>
+                  <h3>Questions</h3>
+                  {quizQuestions.map((q, qIdx) => (
+                    <div key={qIdx} className={styles.questionFormItem} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                      <input
+                        placeholder={`Question ${qIdx + 1}`}
+                        value={q.text}
+                        onChange={(e) => updateQuestion(qIdx, e.target.value)}
+                        className={styles.input}
+                        style={{ marginBottom: '0.5rem' }}
+                      />
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Note: Option editing UI can be expanded here.</p>
                     </div>
-                  </Card>
-                </div>
-              </div>
-            )}
-
-            {/* Community Tab */}
-            {activeTab === 'Community' && !loading && (
-              <div>
-                <div className={styles.communityHeader}>
-                  <div>
-                    <h1>Community Forum</h1>
-                    <p className={styles.communityDesc}>Engage with your students and peers</p>
-                  </div>
-                  <Button variant="primary" onClick={() => window.open('/instructor/forum', '_blank')}>
-                    <FiMessageCircle style={{ marginRight: '0.5rem' }} />
-                    Full Forum
+                  ))}
+                  <Button type="button" variant="outline" onClick={addQuestion}>
+                    <FiPlus /> Add Question
                   </Button>
                 </div>
 
-                {threads && threads.length === 0 ? (
-                  <Card><p>No recent discussions yet.</p></Card>
-                ) : (
-                  <div className={styles.recentThreads}>
-                    {threads && threads.slice(0, 5).map((t) => (
-                      <Card key={t.id} className={styles.threadPreview}>
-                        <div className={styles.threadPreviewHeader}>
-                          <h4>{t.title}</h4>
-                          <span className={styles.threadAuthor}>by {t.author}</span>
-                        </div>
-                        <p className={styles.threadPreviewContent}>{t.content?.substring(0, 100)}...</p>
-                        <div className={styles.threadPreviewFooter}>
-                          <small className={styles.threadDate}>{t.createdDate || 'Recently'}</small>
-                          <Button size="small" onClick={() => window.open(`/forum/${t.id}`, '_blank')}>Reply</Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Support Tab */}
-            {activeTab === 'Support' && !loading && (
-              <div>
-                <div className={styles.headerRow}>
-                  <h1>Need Help?</h1>
+                <div className={styles.modalActions}>
+                  <Button type="button" variant="outline" onClick={() => setShowQuizModal(false)}>Cancel</Button>
+                  <Button type="submit" variant="primary" disabled={quizSubmitting}>
+                    {quizSubmitting ? 'Creating...' : 'Create Quiz'}
+                  </Button>
                 </div>
-
-                <Card className={styles.tableCard}>
-                  <div style={{ padding: '40px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '16px', color: '#666', marginBottom: '20px' }}>
-                      Facing issues or have questions? Our support team is here to help you.
-                    </p>
-                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '20px' }}>
-                      Send us a message and we'll get back to you as soon as possible.
-                    </p>
-                    <Button variant="primary" onClick={() => window.open('/support', '_blank')} style={{ padding: '10px 30px', fontSize: '16px' }}>
-                      Contact Support Team
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            )}
+              </form>
+            </div>
           </div>
-        </main>
+        )}
       </div>
     </ProtectedRoute>
   );

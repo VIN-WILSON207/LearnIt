@@ -12,12 +12,30 @@ import certificateRoutes from './routes/certificateRoutes';
 import forumRoutes from './routes/forumRoutes';
 import supportRoutes from './routes/supportRoutes';
 import enrollmentRoutes from './routes/enrollmentRoutes';
+import userRoutes from './routes/userRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
-import usersRoutes from './routes/usersRoutes';
-import configRoutes from './routes/configRoutes';
-import quizStatsRoutes from './routes/quizStatsRoutes';
-import adminRoutes from './routes/adminRoutes';
-import adminSubscriptionRoutes from './routes/adminSubscriptionRoutes';
+import path from 'path';
+
+dotenv.config();
+
+// Validate required environment variables at startup
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+const optionalEnvVars = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.error(`❌ CRITICAL: Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+});
+
+// Warn about optional but recommended env vars
+optionalEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.warn(`⚠️  WARNING: Missing optional environment variable: ${envVar}`);
+    console.warn(`   Using local file storage instead of Cloudinary`);
+  }
+});
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -41,12 +59,8 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api/quiz-stats', quizStatsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/admin/subscriptions', adminSubscriptionRoutes);
 
 // Root route
 app.get('/', (req: Request, res: Response) => {

@@ -18,48 +18,37 @@
   font-size: 1.1rem;
 }
 
-.main {
-  flex: 1;
-  min-width: 0;
-}
-
-.content {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.25rem;
-  box-shadow: 0 6px 18px rgba(14, 30, 37, 0.04);
-}
-
-.headerRow {
+.tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
 }
 
-.headerActions button {
-  margin-left: 0.5rem;
+.tab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.loading {
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 6px;
-  margin-bottom: 1rem;
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--secondary);
 }
 
-.error {
-  padding: 0.5rem 1rem;
-  background: rgba(239, 68, 68, 0.06);
-  color: #ef4444;
-  border-radius: 6px;
-  margin-bottom: 1rem;
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
-
-/* OVERVIEW */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -307,7 +296,7 @@
   color: #3b82f6;
 }
 
-.badge.professor {
+.badge.instructor {
   background: rgba(139, 92, 246, 0.1);
   color: #8b5cf6;
 }
@@ -1148,56 +1137,108 @@
   }
 }
 
-@media (max-width: 1024px) {
-  .overviewLayout {
-    grid-template-columns: 1fr;
-  }
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
-
-/* SECTION */
-/* .section {
-  margin-bottom: 3rem;
+.modal {
+  background: var(--background);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-.sectionHeader {
+.modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.sectionHeader h2 {
-  font-size: 1.5rem;
+.modalHeader h2 {
   margin: 0;
-} */
-
-
-/* COURSES */
-/* .coursesList {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  font-size: 1.5rem;
 }
 
-.courseItem {
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modalClose:hover {
+  color: var(--text-primary);
+}
+
+.modalForm {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.courseStats {
+.modalForm label {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
 }
 
-.courseActions {
+.input {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 1rem;
+  background: var(--background);
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.required {
+  color: var(--error);
+}
+
+.modalError {
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.modalActions {
   display: flex;
   gap: 1rem;
-  flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
-.courseActions button {
+.modalActions button {
   flex: 1;
-  min-width: 120px;
-} */
+}

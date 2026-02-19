@@ -5,169 +5,179 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
-import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
+import { getCourseById } from '@/lib/api/courses';
+import { enrollInCourse, getStudentEnrollments } from '@/lib/api/enrollments';
+import { BackendCourse, Enrollment } from '@/types';
 import styles from './page.module.css';
-import { StudentLayout } from '@/components/StudentLayout';
+import { FiPlay, FiCheckCircle, FiLock, FiClock, FiFileText } from 'react-icons/fi';
 
-export default function CoursePlayer() {
-    const { id } = useParams();
-    const { user } = useAuth();
-    const router = useRouter();
+export default function CourseDetailPage() {
+     const { id } = useParams();
+     const router = useRouter();
+     const { user } = useAuth();
+     const [course, setCourse] = useState<BackendCourse | null>(null);
+     const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+     const [isLoading, setIsLoading] = useState(true);
+     const [isEnrolling, setIsEnrolling] = useState(false);
+     const [error, setError] = useState<string | null>(null);
 
-    const [course, setCourse] = useState<any>(null);
-    const [progress, setProgress] = useState<any>(null);
-    const [currentLesson, setCurrentLesson] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
-    const isPdf = (url?: string | null) => Boolean(url && url.toLowerCase().includes('.pdf'));
+     useEffect(() => {
+          const fetchData = async () => {
+               if (!id || !user) return;
+               setIsLoading(true);
+               setError(null);
+               try {
+                    const [courseData, enrollmentsData] = await Promise.all([
+                         getCourseById(id as string),
+                         getStudentEnrollments(user.id),
+                    ]);
+                    setCourse(courseData);
+                    const existingEnrollment = enrollmentsData.find(e => e.courseId === id);
+                    setEnrollment(existingEnrollment || null);
+               } catch (err: any) {
+                    console.error('Failed to fetch course details:', err);
+                    setError(err.message || 'Failed to load course details');
+               } finally {
+                    setIsLoading(false);
+               }
+          };
+          fetchData();
+     }, [id, user]);
 
-    useEffect(() => {
-        if (id) loadCourseData();
-    }, [id]);
+     const handleEnroll = async () => {
+          if (!id || !user) return;
+          setIsEnrolling(true);
+          try {
+               const newEnrollment = await enrollInCourse({ courseId: id as string });
+               setEnrollment(newEnrollment);
+          } catch (err: any) {
+               alert(err.message || 'Failed to enroll in course');
+          } finally {
+               setIsEnrolling(false);
+          }
+     };
 
-    const loadCourseData = async () => {
-        try {
-            const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-            const headers = { Authorization: token ? `Bearer ${token}` : '' };
-
-            // 1. Fetch Course Details
-            const courseRes = await fetch(`/api/courses/${id}`, { headers });
-            if (!courseRes.ok) throw new Error('Failed to load course');
-            const courseData = await courseRes.json();
-            setCourse(courseData);
-
-            if (courseData.lessons && courseData.lessons.length > 0) {
-                setCurrentLesson(courseData.lessons[0]);
-            }
-
-            // 2. Fetch User Progress (Simple implementation: assume progress tracks percent)
-            // Real implementation might need detailed lesson-level tracking
-            const progRes = await fetch(`/api/progress/${id}`, { headers });
-            if (progRes.ok) {
-                const progData = await progRes.json();
-                setProgress(progData);
-                // Heuristic: If 100%, all marked. If 0%, none.
-                // For a real app, we'd need a 'completedLessons' array in the progress model.
-                // For now, we'll track locally for the session or assume linear progress based on percent.
-            }
-
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleLessonComplete = async () => {
-        if (!course || !currentLesson) return;
-
-        // Calculate new percent
-        // This is a simplified logic. In strict mode, we'd track exactly which IDs are done.
-        const totalLessons = course.lessons.length;
-        const newCompleted = new Set(completedLessons).add(currentLesson.id);
-        const percent = Math.floor((newCompleted.size / totalLessons) * 100); // Fixed arithmetic logic for demo
-
-        // For the sake of this demo, let's just increment progress by "snippet"
-        // Better: Find current lesson index, if it's the last one, 100%.
-        const currentIndex = course.lessons.findIndex((l: any) => l.id === currentLesson.id);
-        const isLastFn = currentIndex === course.lessons.length - 1;
-        const newPercent = isLastFn ? 100 : Math.round(((currentIndex + 1) / totalLessons) * 100);
-
-        try {
-            const token = localStorage.getItem('token');
-            await fetch('/api/progress', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: token ? `Bearer ${token}` : '',
-                },
-                body: JSON.stringify({
-                    courseId: course.id,
-                    percent: newPercent
-                })
-            });
-
-            setProgress({ ...progress, percent: newPercent });
-            setCompletedLessons(newCompleted); // Update local state
-
-            if (newPercent === 100) {
-                alert('Course Completed! Certificate Generated.');
-            } else {
-                // Auto-advance
-                if (!isLastFn) {
-                    setCurrentLesson(course.lessons[currentIndex + 1]);
-                }
-            }
-
-        } catch (err) {
-            console.error('Failed to update progress');
-        }
-    };
-
-    if (loading) return <div>Loading...</div>;
-    if (!course) return <div>Course not found</div>;
-
-    return (
-        <ProtectedRoute requiredRole="student">
-            <Navbar />
-            <StudentLayout active="courses">
-                <div className={styles.container}>
-                    <div className={styles.sidebar}>
-                        <h3>{course.title}</h3>
-                        <div className={styles.progressContainer}>
-                            <div className={styles.progressBar} style={{ width: `${progress?.percent || 0}%` }}></div>
-                        </div>
-                        <ul className={styles.lessonList}>
-                            {course.lessons?.map((lesson: any, idx: number) => (
-                                <li
-                                    key={lesson.id}
-                                    className={`${styles.lessonItem} ${currentLesson?.id === lesson.id ? styles.active : ''}`}
-                                    onClick={() => setCurrentLesson(lesson)}
-                                >
-                                    {idx + 1}. {lesson.title}
-                                </li>
-                            ))}
-                        </ul>
+     if (isLoading) {
+          return (
+               <ProtectedRoute requiredRole="student">
+                    <Navbar />
+                    <div className={styles.container}>
+                         <p style={{ textAlign: 'center', padding: '3rem' }}>Loading course details...</p>
                     </div>
-                    <div className={styles.contentArea}>
-                        {currentLesson ? (
-                            <Card className={styles.playerCard}>
-                                <h2>{currentLesson.title}</h2>
-                                {currentLesson.videoUrl && (
-                                    <video controls src={currentLesson.videoUrl} className={styles.videoPlayer} />
-                                )}
-                                {currentLesson.attachmentUrl && (
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <a href={currentLesson.attachmentUrl} target="_blank" rel="noreferrer">
-                                            View lesson document
-                                        </a>
-                                    </div>
-                                )}
-                                {currentLesson.attachmentUrl && isPdf(currentLesson.attachmentUrl) && (
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <iframe
-                                            title={`${currentLesson.title} document`}
-                                            src={currentLesson.attachmentUrl}
-                                            style={{ width: '100%', height: 420, border: '1px solid #e5e7eb', borderRadius: 8 }}
-                                        />
-                                    </div>
-                                )}
-                                <div className={styles.lessonContent}>
-                                    {currentLesson.content}
-                                </div>
-                                <div className={styles.actions}>
-                                    <Button onClick={handleLessonComplete} variant="primary">
-                                        Mark as Complete & Continue
-                                    </Button>
-                                </div>
-                            </Card>
-                        ) : (
-                            <div className={styles.emptyState}>Select a lesson to start</div>
-                        )}
+               </ProtectedRoute>
+          );
+     }
+
+     if (error || !course) {
+          return (
+               <ProtectedRoute requiredRole="student">
+                    <Navbar />
+                    <div className={styles.container}>
+                         <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--error)' }}>
+                              {error || 'Course not found'}
+                         </p>
                     </div>
-                </div>
-            </StudentLayout>
-        </ProtectedRoute>
-    );
+               </ProtectedRoute>
+          );
+     }
+
+     return (
+          <ProtectedRoute requiredRole="student">
+               <Navbar />
+               <div className={styles.container}>
+                    <div className={styles.header}>
+                         <div className={styles.headerContent}>
+                              <h1>{course.title}</h1>
+                              <p className={styles.category}>{course.subject?.name}</p>
+                              <p className={styles.description}>{course.description}</p>
+                              <div className={styles.meta}>
+                                   <div className={styles.metaItem}>
+                                        <FiClock /> <span>{course.lessons?.length || 0} Lessons</span>
+                                   </div>
+                                   <div className={styles.metaItem}>
+                                        <FiFileText /> <span>{course.instructor?.name}</span>
+                                   </div>
+                              </div>
+                              {!enrollment ? (
+                                   <Button
+                                        variant="primary"
+                                        size="large"
+                                        onClick={handleEnroll}
+                                        disabled={isEnrolling}
+                                        className={styles.enrollBtn}
+                                   >
+                                        {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
+                                   </Button>
+                              ) : (
+                                   <div className={styles.enrolledBadge}>
+                                        <FiCheckCircle /> <span>Enrolled</span>
+                                   </div>
+                              )}
+                         </div>
+                         {course.thumbnailUrl && (
+                              <div className={styles.thumbnail}>
+                                   <img
+                                        src={course.thumbnailUrl}
+                                        alt={course.title}
+                                        onError={(e) => {
+                                             const target = e.target as HTMLImageElement;
+                                             target.onerror = null;
+                                             target.src = 'https://placehold.co/800x450?text=Course+Preview';
+                                        }}
+                                   />
+                              </div>
+                         )}
+                    </div>
+
+                    <div className={styles.content}>
+                         <div className={styles.lessonsSection}>
+                              <h2>Course Content</h2>
+                              <div className={styles.lessonsList}>
+                                   {course.lessons && course.lessons.length > 0 ? (
+                                        course.lessons.sort((a, b) => a.orderNumber - b.orderNumber).map((lesson) => (
+                                             <Card key={lesson.id} className={styles.lessonItem}>
+                                                  <div className={styles.lessonInfo}>
+                                                       <span className={styles.order}>{lesson.orderNumber}</span>
+                                                       <div className={styles.lessonText}>
+                                                            <h3>{lesson.title}</h3>
+                                                            {lesson.isFree && <span className={styles.freeBadge}>Free Preview</span>}
+                                                       </div>
+                                                  </div>
+                                                  {enrollment || lesson.isFree ? (
+                                                       <Button
+                                                            variant="outline"
+                                                            size="small"
+                                                            onClick={() => router.push(`/student/lessons/${lesson.id}`)}
+                                                       >
+                                                            <FiPlay /> Watch
+                                                       </Button>
+                                                  ) : (
+                                                       <div className={styles.locked}>
+                                                            <FiLock /> Locked
+                                                       </div>
+                                                  )}
+                                             </Card>
+                                        ))
+                                   ) : (
+                                        <p className={styles.empty}>No lessons available for this course yet.</p>
+                                   )}
+                              </div>
+                         </div>
+
+                         <div className={styles.sidebar}>
+                              <Card className={styles.courseStats}>
+                                   <h3>About this course</h3>
+                                   <ul>
+                                        <li>Level: {course.subject?.level?.name || 'All Levels'}</li>
+                                        <li>Access: Lifetime</li>
+                                        <li>Certificate: Yes</li>
+                                   </ul>
+                              </Card>
+                         </div>
+                    </div>
+               </div>
+          </ProtectedRoute>
+     );
 }

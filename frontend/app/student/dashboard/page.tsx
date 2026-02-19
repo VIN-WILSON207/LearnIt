@@ -8,6 +8,11 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { getStudentEnrollments } from '@/lib/api/enrollments';
+import { getUserProgress } from '@/lib/api/progress';
+import { getCertificates } from '@/lib/api/certificates';
+import { getCourseById } from '@/lib/api/courses';
+import { Enrollment, Certificate, Progress, BackendCourse } from '@/types';
 import styles from './page.module.css';
 import { FiAward, FiClock, FiBook, FiMessageCircle } from 'react-icons/fi';
 import { StudentLayout } from '@/components/StudentLayout';
@@ -17,261 +22,120 @@ type Tab = (typeof TABS)[number];
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>('Overview');
-
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [certificates, setCertificates] = useState<any[]>([]);
-  const [totalHours, setTotalHours] = useState(0);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [progressData, setProgressData] = useState<Progress[]>([]);
+  const [courses, setCourses] = useState<Record<string, BackendCourse>>({});
+  const [totalCourses, setTotalCourses] = useState(0);
   const [completedCourses, setCompletedCourses] = useState(0);
-  const [subscriptions, setSubscriptions] = useState<any[] | null>(null);
-  const [threads, setThreads] = useState<any[] | null>(null);
-  const [tickets, setTickets] = useState<any[] | null>(null);
-  const [availableCourses, setAvailableCourses] = useState<any[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    const fetchData = async () => {
+      if (!user) return;
 
-    // Fetch enrollments
-    const fetchEnrollments = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/enrollments?studentId=${user.id}`, { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-        if (res.ok) {
-          setEnrollments(await res.json());
-        }
+        // Fetch all data in parallel
+        const [enrollmentsData, certificatesData, progressData] = await Promise.all([
+          getStudentEnrollments(user.id),
+          getCertificates(),
+          getUserProgress(),
+        ]);
+
+        setEnrollments(enrollmentsData);
+        setCertificates(certificatesData);
+        setProgressData(progressData);
+
+        // Fetch course details for enrollments
+        const coursePromises = enrollmentsData.map((enrollment) =>
+          getCourseById(enrollment.courseId).catch(() => null)
+        );
+        const courseResults = await Promise.all(coursePromises);
+        const coursesMap: Record<string, BackendCourse> = {};
+        courseResults.forEach((course, index) => {
+          if (course) {
+            coursesMap[enrollmentsData[index].courseId] = course;
+          }
+        });
+        setCourses(coursesMap);
+
+        // Calculate stats
+        setTotalCourses(enrollmentsData.length);
+        const completed = progressData.filter((p) => p.percent >= 100).length;
+        setCompletedCourses(completed);
       } catch (err) {
-        console.error('Failed to load enrollments', err);
+        console.error('Failed to fetch student data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    // Fetch certificates
-    const fetchCertificates = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/certificates', { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-        if (res.ok) {
-          setCertificates(await res.json());
-        }
-      } catch (err) {
-        console.error('Failed to load certificates', err);
-      }
-    };
-
-    fetchEnrollments();
-    fetchCertificates();
+    fetchData();
   }, [user]);
 
-  // Load data for subscriptions, community and support when those tabs are active
-  useEffect(() => {
-    if (!user) return;
-    const token = localStorage.getItem('token');
-
-    const load = async () => {
-      try {
-        if (activeTab === 'Overview') {
-          const res = await fetch('/api/courses', { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-          setAvailableCourses(res.ok ? await res.json() : []);
-        }
-
-        if (activeTab === 'Subscriptions') {
-          const res = await fetch('/api/subscriptions', { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-          setSubscriptions(res.ok ? await res.json() : []);
-        }
-
-        if (activeTab === 'Community') {
-          const res = await fetch('/api/forum', { headers: { Authorization: token ? `Bearer ${token}` : '' } });
-          setThreads(res.ok ? await res.json() : []);
-        }
-
-        if (activeTab === 'Support') {
-        }
-      } catch (err) {
-        console.error('Failed to load student tab data', err);
-      }
-    };
-
-    load();
-  }, [activeTab, user]);
-
-  const handleContinue = (courseId?: string) => {
-    if (courseId) window.open(`/courses/${courseId}`, '_blank');
-  };
-
-  const handleDownloadCertificate = async (id: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/certificates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
-        body: JSON.stringify({ action: 'download', id })
-      });
-
-      if (res.ok) {
-        const { downloadUrl } = await res.json();
-        window.open(downloadUrl, '_blank');
-      } else {
-        const error = await res.json();
-        if (res.status === 403 && error.code === 'SUBSCRIPTION_REQUIRED') {
-          if (confirm('A subscription is required to download certificates. Would you like to view plans?')) {
-            router.push('/student/subscription');
-          }
-        } else {
-          alert(error.error || 'Failed to download certificate');
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Error downloading certificate');
-    }
-  };
-
-  const handleTakeCourse = async (courseId: string) => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
-        body: JSON.stringify({ courseId, studentId: user.id }),
-      });
-      if (res.ok) {
-        const newEnrollment = await res.json();
-        setEnrollments([...enrollments, newEnrollment]);
-        alert('Course enrolled successfully!');
-      } else {
-        alert('Failed to enroll in course');
-      }
-    } catch (err) {
-      console.error('Enrollment error:', err);
-      alert('Error enrolling in course');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExportPdf = () => {
-    if (!user) return;
-
-    const enrolledCount = enrollments.length;
-    const certificateCount = certificates.length;
-    const courseRows = enrollments
-      .map((enrollment) => {
-        const course = availableCourses?.find((c: any) => c.id === enrollment.courseId);
-        const title = course?.title || `Course ${enrollment.courseId}`;
-        const progress = enrollment.progress ?? 0;
-        const hours = `${enrollment.hoursCompleted ?? 0} / ${course?.hours ?? 0}`;
-        return `<tr><td>${title}</td><td>${progress}%</td><td>${hours}</td></tr>`;
-      })
-      .join('');
-
-    const certificateRows = certificates
-      .map((cert) => {
-        const title = cert.courseName || 'Course Certificate';
-        const issueDate = cert.issueDate || 'N/A';
-        const certNumber = cert.certificateNumber || cert.id || 'N/A';
-        return `<tr><td>${title}</td><td>${issueDate}</td><td>${certNumber}</td></tr>`;
-      })
-      .join('');
-
-    const printable = window.open('', '_blank', 'width=900,height=700');
-    if (!printable) return;
-
-    printable.document.write(`
-      <html>
-        <head>
-          <title>LearnIT Student Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
-            h1 { margin-bottom: 8px; }
-            .meta { color: #555; margin-bottom: 24px; }
-            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-            .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
-            .label { color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
-            .value { font-size: 20px; font-weight: 600; margin-top: 6px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-            th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; font-size: 14px; }
-            th { background: #f9fafb; }
-            .section { margin-top: 24px; }
-          </style>
-        </head>
-        <body>
-          <h1>Student Progress Report</h1>
-          <div class="meta">
-            <div><strong>Name:</strong> ${user.name}</div>
-            <div><strong>Email:</strong> ${user.email}</div>
-            <div><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="student">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <p>Loading dashboard...</p>
           </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
-          <div class="grid">
-            <div class="card">
-              <div class="label">Learning Hours</div>
-              <div class="value">${totalHours}</div>
-            </div>
-            <div class="card">
-              <div class="label">Courses Completed</div>
-              <div class="value">${completedCourses}</div>
-            </div>
-            <div class="card">
-              <div class="label">Certificates Earned</div>
-              <div class="value">${certificateCount}</div>
-            </div>
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole="student">
+        <Navbar />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--error)' }}>
+            <p>{error}</p>
           </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
-          <div class="section">
-            <h2>Enrolled Courses (${enrolledCount})</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Course</th>
-                  <th>Progress</th>
-                  <th>Hours</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${courseRows || '<tr><td colspan="3">No enrollments yet.</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-
-          <div class="section">
-            <h2>Certificates (${certificateCount})</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Certificate</th>
-                  <th>Issued</th>
-                  <th>Certificate #</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${certificateRows || '<tr><td colspan="3">No certificates yet.</td></tr>'}
-              </tbody>
-            </table>
-          </div>
-        </body>
-      </html>
-    `);
-
-    printable.document.close();
-    printable.focus();
-    printable.print();
+  // Get progress for each enrollment
+  const getProgressForCourse = (courseId: string): number => {
+    const progress = progressData.find((p) => p.courseId === courseId);
+    return progress?.percent || 0;
   };
 
   return (
     <ProtectedRoute requiredRole="student">
       <Navbar />
-      <StudentLayout active="dashboard">
-        <div className={styles.content}>
-            {/* Header */}
-            <div className={styles.headerRow}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1>Welcome, {user?.name}!</h1>
+          <p>Track your learning progress and explore new courses</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className={styles.statsGrid}>
+          <Card className={styles.statCard}>
+            <div className={styles.statContent}>
+              <div className={styles.statIcon}>
+                <FiBook />
+              </div>
               <div>
-                <h1>Welcome, {user?.name}!</h1>
-                <p className={styles.sub}>
-                  Track your learning progress and explore new courses
-                </p>
+                <div className={styles.statLabel}>Enrolled Courses</div>
+                <div className={styles.statValue}>{totalCourses}</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className={styles.statCard}>
+            <div className={styles.statContent}>
+              <div className={styles.statIcon}>
+                <FiBook />
               </div>
               <div className={styles.headerActions}>
                 <Button variant="outline" onClick={handleExportPdf}>
@@ -297,112 +161,67 @@ export default function StudentDashboard() {
                     </div>
                   </Card>
 
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiBook /></div>
-                      <div>
-                        <div className={styles.statLabel}>Courses Completed</div>
-                        <div className={styles.statValue}>{completedCourses}</div>
+        {/* In Progress Courses */}
+        <div className={styles.section}>
+          <h2>Your Courses</h2>
+          {enrollments.length === 0 ? (
+            <Card>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                <p>You haven't enrolled in any courses yet. Browse courses to get started!</p>
+              </div>
+            </Card>
+          ) : (
+            <div className={styles.coursesGrid}>
+              {enrollments.map((enrollment) => {
+                const course = courses[enrollment.courseId];
+                const progress = getProgressForCourse(enrollment.courseId);
+                if (!course) return null;
+
+                return (
+                  <Card key={enrollment.id} className={styles.courseCard}>
+                    <h3>{course.title}</h3>
+                    <p>{course.description || 'No description'}</p>
+                    <div className={styles.courseProgress}>
+                      <div className={styles.progressLabel}>
+                        Progress: {progress}%
+                      </div>
+                      <div className={styles.progressBar}>
+                        <div
+                          className={styles.progressFill}
+                          style={{ width: `${progress}%` }}
+                        />
                       </div>
                     </div>
+                    <p className={styles.courseStats}>
+                      Subject: {course.subject?.name || 'N/A'}
+                    </p>
+                    <Button variant="primary" className={styles.courseBtn}>
+                      Continue Learning
+                    </Button>
                   </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiAward /></div>
+        {/* Certificates */}
+        {certificates.length > 0 && (
+          <div className={styles.section}>
+            <h2>Your Certificates</h2>
+            <div className={styles.certificatesList}>
+              {certificates.map((cert) => {
+                const course = courses[cert.courseId] || cert.course;
+                return (
+                  <Card key={cert.id} className={styles.certCard}>
+                    <div className={styles.certContent}>
+                      <FiAward className={styles.certIcon} />
                       <div>
-                        <div className={styles.statLabel}>Certificates Earned</div>
-                        <div className={styles.statValue}>{certificates.length}</div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                <div className={styles.section}>
-                  <h2>Available Courses</h2>
-                  <div className={styles.coursesGrid}>
-                    {availableCourses && availableCourses.length === 0 && <Card><p>No courses available</p></Card>}
-                    {availableCourses && availableCourses.map((course) => {
-                      const isEnrolled = enrollments.some(e => e.courseId === course.id);
-                      return (
-                        <Card key={course.id} className={styles.courseCard}>
-                          <img src={course.image} alt={course.title} className={styles.courseImage} />
-                          <h3>{course.title}</h3>
-                          <p>{course.description}</p>
-                          <p className={styles.courseStats}>Instructor: {course.instructorName || 'Unknown'}</p>
-                          <p className={styles.courseStats}>{course.hours || 0} hours</p>
-                          <Button
-                            variant={isEnrolled ? 'outline' : 'primary'}
-                            className={styles.courseBtn}
-                            onClick={() => isEnrolled ? setActiveTab('Courses') : handleTakeCourse(course.id)}
-                            disabled={loading}
-                          >
-                            {isEnrolled ? 'Already Enrolled' : 'Take Course'}
-                          </Button>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Courses Tab */}
-            {activeTab === 'Courses' && (
-              <div className={styles.section}>
-                <h2>Your Courses</h2>
-                <div className={styles.coursesGrid}>
-                  {enrollments?.length === 0 ? (
-                    <Card><p>You haven't enrolled in any courses yet. Check the Overview tab for available courses!</p></Card>
-                  ) : (
-                    enrollments?.map((enrollment) => {
-                      const course = availableCourses?.find((c: any) => c.id === enrollment.courseId);
-                      return (
-                        <Card key={enrollment.id} className={styles.courseCard}>
-                          <img src={course?.image || '/images/course-placeholder.png'} alt={course?.title || 'Course'} className={styles.courseImage} />
-                          <h3>{course?.title || `Course ${enrollment.courseId}`}</h3>
-                          <p>{course?.description || ''}</p>
-
-                          <div className={styles.courseProgress}>
-                            <div className={styles.progressLabel}>Progress: {enrollment.progress}%</div>
-                            <div className={styles.progressBar}>
-                              <div
-                                className={styles.progressFill}
-                                style={{ width: `${enrollment.progress}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          <p className={styles.courseStats}>
-                            {enrollment.hoursCompleted} / {course?.hours || 0} hours
-                          </p>
-
-                          <Button
-                            variant="primary"
-                            className={styles.courseBtn}
-                            onClick={() => handleContinue(course?.id)}
-                          >
-                            Continue Learning
-                          </Button>
-                        </Card>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Progress Tab */}
-            {activeTab === 'Progress' && (
-              <div className={styles.section}>
-                <h2>Your Progress</h2>
-                <div className={styles.statsGrid}>
-                  <Card className={styles.statCard}>
-                    <div className={styles.statContent}>
-                      <div className={styles.statIcon}><FiClock /></div>
-                      <div>
-                        <div className={styles.statLabel}>Learning Hours</div>
-                        <div className={styles.statValue}>{totalHours}</div>
+                        <h3>{course?.title || 'Course'}</h3>
+                        <p>Issued: {new Date(cert.issueDate).toLocaleDateString()}</p>
+                        <p className={styles.certNumber}>
+                          Cert ID: {cert.id.substring(0, 8)}
+                        </p>
                       </div>
                     </div>
                   </Card>

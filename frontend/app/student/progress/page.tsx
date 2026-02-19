@@ -5,44 +5,59 @@ import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/Card';
+import { getStudentEnrollments } from '@/lib/api/enrollments';
+import { getUserProgress } from '@/lib/api/progress';
+import { getCourseById } from '@/lib/api/courses';
+import { Enrollment, Progress, BackendCourse } from '@/types';
 import styles from './page.module.css';
-import { FiTrendingUp, FiAward } from 'react-icons/fi';
-import { StudentLayout } from '@/components/StudentLayout';
+import { FiTrendingUp, FiAward, FiBook } from 'react-icons/fi';
 
 export default function ProgressPage() {
   const { user } = useAuth();
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [progressData, setProgressData] = useState<Progress[]>([]);
+  const [courses, setCourses] = useState<Record<string, BackendCourse>>({});
   const [stats, setStats] = useState({ totalHours: 0, completedCourses: 0, inProgress: 0 });
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-
-    const fetchEnrollments = async () => {
-      setLoading(true);
+    const fetchData = async () => {
+      if (!user) return;
+      setIsLoading(true);
+      setError(null);
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/enrollments?studentId=${user.id}`, {
-          headers: { Authorization: token ? `Bearer ${token}` : '' }
+        const [enrollmentsData, progressData] = await Promise.all([
+          getStudentEnrollments(user.id),
+          getUserProgress(),
+        ]);
+
+        setEnrollments(enrollmentsData);
+        setProgressData(progressData);
+
+        // Fetch course details
+        const coursePromises = enrollmentsData.map(e => getCourseById(e.courseId).catch(() => null));
+        const courseResults = await Promise.all(coursePromises);
+        const coursesMap: Record<string, BackendCourse> = {};
+        courseResults.forEach((c, i) => {
+          if (c) coursesMap[enrollmentsData[i].courseId] = c;
         });
-        if (res.ok) {
-          const data = await res.json();
-          setEnrollments(data);
+        setCourses(coursesMap);
 
-          const totalHours = data.reduce((sum: number, e: any) => sum + (e.hoursCompleted || 0), 0);
-          const completed = data.filter((e: any) => e.status === 'completed').length;
-          const inProgress = data.filter((e: any) => e.status === 'in-progress').length;
+        const completed = progressData.filter(p => p.percent >= 100).length;
+        const inProgress = progressData.filter(p => p.percent > 0 && p.percent < 100).length;
+        // Backend doesn't provide hours yet, using a heuristic or placeholder
+        const totalHours = progressData.reduce((sum, p) => sum + Math.floor(p.percent / 10), 0);
 
-          setStats({ totalHours, completedCourses: completed, inProgress });
-        }
-      } catch (err) {
-        console.error('Failed to load progress', err);
+        setStats({ totalHours, completedCourses: completed, inProgress });
+      } catch (err: any) {
+        console.error('Failed to fetch progress:', err);
+        setError(err.message || 'Failed to load progress data');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchEnrollments();
+    fetchData();
   }, [user]);
 
   return (
@@ -92,28 +107,52 @@ export default function ProgressPage() {
         <div className={styles.section}>
           <h2>Course Progress Details</h2>
           <div className={styles.progressList}>
-            {loading ? (
-              <Card><p>Loading progress...</p></Card>
-            ) : enrollments.length === 0 ? (
-              <Card><p>No enrolled courses yet</p></Card>
-            ) : (
-              enrollments.map(enrollment => {
-                const percentage = enrollment.progress || 0;
+            {isLoading && <p>Loading detailed progress...</p>}
+            {error && <p className={styles.error}>{error}</p>}
+            {!isLoading && enrollments.length === 0 && (
+              <Card>
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <p>You haven't enrolled in any courses yet.</p>
+                </div>
+              </Card>
+            )}
+            {enrollments.map(enrollment => {
+              const course = courses[enrollment.courseId];
+              const progress = progressData.find(p => p.courseId === enrollment.courseId);
+              const percentage = progress?.percent || 0;
 
-                return (
-                  <Card key={enrollment.id} className={styles.progressItem}>
-                    <div className={styles.progressHeader}>
-                      <h3>{enrollment.courseId}</h3>
-                      <span className={`${styles.statusBadge} ${styles[enrollment.status]}`}>
-                        {enrollment.status === 'completed' ? '✓ Completed' : 'In Progress'}
+              return (
+                <Card key={enrollment.id} className={styles.progressItem}>
+                  <div className={styles.progressHeader}>
+                    <h3>{course?.title || 'Loading course...'}</h3>
+                    <span className={`${styles.statusBadge} ${percentage >= 100 ? styles.completed : styles.in_progress}`}>
+                      {percentage >= 100 ? '✓ Completed' : 'In Progress'}
+                    </span>
+                  </div>
+
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progressFill}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+
+                  <div className={styles.progressStats}>
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Progress</span>
+                      <span className={styles.value}>{percentage}%</span>
+                    </div>
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Lessons</span>
+                      <span className={styles.value}>
+                        {course?.lessons?.length || 0}
                       </span>
                     </div>
-
-                    <div className={styles.progressBar}>
-                      <div
-                        className={styles.progressFill}
-                        style={{ width: `${percentage}%` }}
-                      />
+                    <div className={styles.stat}>
+                      <span className={styles.label}>Enrolled</span>
+                      <span className={styles.value}>
+                        {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                      </span>
                     </div>
 
                     <div className={styles.progressStats}>

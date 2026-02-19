@@ -12,14 +12,23 @@ export interface Subscription {
 export interface User {
   id: string;
   email: string;
-  name: string; // Changed from fullName to match backend
-  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'; // Uppercase to match Prisma enum
+  name: string; // Required, from backend
+  role: 'student' | 'instructor' | 'admin'; // Normalized role (lowercase for frontend)
+  avatar?: string;
   levelId?: string;
   level?: {
     id: string;
     name: string;
   };
   subscription?: Subscription | null;
+}
+
+// Backend User (raw response from API)
+export interface BackendUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'; // Uppercase from backend
 }
 
 // Course types
@@ -227,4 +236,62 @@ export interface ApiError {
   error: string;
   message?: string;
   status: number;
+}
+
+// Backend API Response Types
+export interface LoginResponse {
+  message: string;
+  token: string;
+  user: BackendUser;
+}
+
+export interface RegisterResponse {
+  message: string;
+  token: string;
+  user: BackendUser;
+}
+
+// Backend Course (raw response from API)
+export interface BackendCourse {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnailUrl?: string | null;
+  subjectId: string;
+  instructorId: string;
+  isPublished: boolean;
+  createdAt: string;
+  subject?: {
+    id: string;
+    code: string;
+    name: string;
+    level?: {
+      id: string;
+      name: string;
+    };
+  };
+  instructor?: {
+    name: string;
+  };
+  lessons?: BackendLesson[];
+}
+
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  enrolledAt: string;
+  course?: Partial<BackendCourse>;
+}
+
+export interface BackendLesson {
+  id: string;
+  courseId: string;
+  title: string;
+  content: string | null;
+  videoUrl: string | null;
+  attachmentUrl: string | null;
+  orderNumber: number;
+  isFree: boolean;
+  createdAt: string;
 }
