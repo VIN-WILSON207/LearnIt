@@ -1,0 +1,250 @@
+.studentLayout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  min-height: calc(100vh - 80px);
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 6px 18px rgba(14, 30, 37, 0.06);
+  position: sticky;
+  top: 1rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.navItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.navItem:hover {
+  background: rgba(0, 102, 204, 0.05);
+  color: var(--text-primary);
+}
+
+.active {
+  background: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+  border-left: 3px solid var(--primary);
+  padding-left: calc(1.5rem - 3px);
+  font-weight: 500;
+}
+
+.sidebarFooter {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.userSummary {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.roleBadge {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.logoutButton {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #ef4444;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.logoutButton:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Mobile Navigation */
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 90px;
+  right: 1rem;
+  z-index: 1300;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+}
+
+.mobileMenuButton:hover {
+  transform: scale(1.05);
+}
+
+.mobileMenuButton:active {
+  transform: scale(0.95);
+}
+
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+}
+
+@media (max-width: 768px) {
+  .mobileMenuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileOverlay {
+    display: block;
+  }
+
+  .studentLayout {
+    padding: 1rem;
+    padding-top: 4rem;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    height: 100vh;
+    width: 280px;
+    z-index: 1200;
+    transition: left 0.3s ease-in-out;
+    max-height: 100vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: none;
+  }
+
+  .sidebarOpen {
+    left: 0;
+  }
+
+  .brand {
+    color: white;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.2rem;
+  }
+
+  .navItem {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .navItem:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+  }
+
+  .active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    border-left: 3px solid white;
+    font-weight: 600;
+    padding-left: calc(1rem - 3px);
+  }
+
+  .sidebarFooter {
+    border-top: 1px dashed rgba(255, 255, 255, 0.3);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .userSummary {
+    color: white;
+    font-size: 0.9rem;
+  }
+
+  .roleBadge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .logoutButton {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .logoutButton:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+  }
+}

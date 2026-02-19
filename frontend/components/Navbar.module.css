@@ -28,7 +28,7 @@
   font-size: 0.7rem;
   color: var(--text-secondary);
   font-style: italic;
-  margin-left: 0.5rem;
+  margin-left: auto;
   display: none;
 }
 

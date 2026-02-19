@@ -24,8 +24,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return;
     }
 
-    if (requiredRole && user.role !== requiredRole) {
-      router.push(`/${user.role}/dashboard`);
+    if (requiredRole && user.role.toLowerCase() !== requiredRole.toLowerCase()) {
+      router.push(`/${user.role.toLowerCase()}/dashboard`);
     }
   }, [user, isLoading, requiredRole, router]);
 
@@ -37,7 +37,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (!user || (requiredRole && user.role !== requiredRole)) {
+  if (!user || (requiredRole && user.role.toLowerCase() !== requiredRole.toLowerCase())) {
     return null;
   }
 

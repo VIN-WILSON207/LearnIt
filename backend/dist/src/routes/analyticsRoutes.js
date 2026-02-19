@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const analyticsController_1 = require("../controllers/analyticsController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/', auth_1.authenticate, (0, auth_1.authorize)('ADMIN'), analyticsController_1.getOverallAnalytics);
+router.get('/course/:courseId', auth_1.authenticate, analyticsController_1.getCourseAnalytics);
+router.get('/user/:userId', auth_1.authenticate, analyticsController_1.getUserAnalytics);
+router.get('/engagement', auth_1.authenticate, (0, auth_1.authorize)('ADMIN'), analyticsController_1.getEngagementMetrics);
+exports.default = router;

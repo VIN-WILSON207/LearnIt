@@ -15,10 +15,13 @@ export default function Login() {
   const { login, user } = useAuth();
   const router = useRouter();
 
+
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      router.push(`/${user.role}/dashboard`);
+      if (user && user.role) {
+        router.push(`/${user.role.toLowerCase()}/dashboard`);
+      }
     }
   }, [user, router]);
 
@@ -29,8 +32,8 @@ export default function Login() {
 
     try {
       await login(email, password);
-    } catch (err) {
-      setError('Invalid email or password. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password. Please try again.');
       console.error('Login failed:', err);
     } finally {
       setIsLoading(false);
@@ -41,7 +44,7 @@ export default function Login() {
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <h1>LearntIt</h1>
+          <h1>LearnIt</h1>
           <p>Smart Learning, Better Results</p>
         </div>
 
@@ -79,13 +82,13 @@ export default function Login() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            <div className={styles.demoInfo}>
-              <h3>Demo Credentials:</h3>
-              <ul>
-                <li><strong>Student:</strong> student@example.com / student123</li>
-                <li><strong>Professor:</strong> professor@example.com / professor123</li>
-                <li><strong>Admin:</strong> admin@example.com / admin123</li>
-              </ul>
+            <div className={styles.footerLink}>
+              <p className={styles.link}>
+                Don't have an account? <a href="/register">Sign Up</a>
+              </p>
+              <p className={styles.link}>
+                <a href="/forgot-password">Forgot Password?</a>
+              </p>
             </div>
           </form>
         </Card>

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { ToastProvider } from '@/context/ToastContext';
 
 export const metadata: Metadata = {
-  title: 'LearntIt - Smart Learning, Better Results | O/L & A/L ICT & Computer Science',
-  description: 'LearntIt: A comprehensive learning platform for O/L and A/L ICT & Computer Science. Learn with smart tools, better results, and expert guidance.',
-  keywords: 'LearntIt, Learning Management System, O/L, A/L, ICT, Computer Science, Online Learning',
+  title: 'LearnIt - Smart Learning, Better Results | O/L & A/L ICT & Computer Science',
+  description: 'LearnIt: A comprehensive learning platform for O/L and A/L ICT & Computer Science.',
+  keywords: 'LearnIt, Learning Management System, O/L, A/L, ICT, Computer Science, Online Learning',
   openGraph: {
-    title: 'LearntIt - Smart Learning Platform',
+    title: 'LearnIt - Smart Learning Platform',
     description: 'Smart Learning, Better Results',
   },
 };
@@ -19,9 +20,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

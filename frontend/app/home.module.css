@@ -1,0 +1,607 @@
+.navContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+    background: #ffffff;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.navLinks {
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+}
+
+.navLinks a {
+    color: #666;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding-bottom: 4px;
+}
+
+.navLinks a:hover {
+    color: var(--primary-blue);
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Hamburger menu */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: var(--primary-blue);
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+
+/* HERO SECTION */
+.heroSection {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 620px;
+    overflow: hidden;
+    border-radius: 0;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+
+}
+
+.heroImageContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.heroImageContainer img {
+    object-fit: cover;
+    object-position: center;
+}
+
+.heroImageContainer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    text-align: center;
+    padding: 3rem 2rem;
+    animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.heroTitle {
+    font-size: 3rem;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    animation: fadeInUp 1s ease-out 0.2s backwards;
+}
+
+.heroContent p {
+    font-size: 1.3rem;
+    color: white;
+    line-height: 1.8;
+    margin: 0 auto 2rem;
+    max-width: 650px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: fadeInUp 1s ease-out 0.4s backwards;
+}
+
+.heroContent>div {
+    animation: fadeInUp 1s ease-out 0.6s backwards;
+}
+
+
+/* PATH SELECTION */
+.pathSelection {
+    padding: 4rem 5%;
+    position: relative;
+    background: var(--light-gray);
+}
+
+.pathSelection::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--neutral-200), transparent);
+}
+
+.pathIntro {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.pathIntro {
+    color: #666;
+    font-size: 1.15rem;
+    margin-top: 0;
+}
+
+.paths {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pathCard {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    border: 2px solid var(--neutral-200);
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.pathCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-color: transparent;
+}
+
+.pathCard.student:hover {
+    box-shadow: 0 20px 40px rgba(0, 102, 255, 0.2);
+}
+
+.pathCard.instructor:hover {
+    box-shadow: 0 20px 40px rgba(255, 107, 53, 0.2);
+}
+
+.pathIcon {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+}
+
+.pathCard h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--neutral-900);
+}
+
+.pathCard .subtitle {
+    font-size: 1rem;
+    color: var(--neutral-800);
+    opacity: 0.7;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.pathFeatures {
+    list-style: none;
+    margin-bottom: 2.5rem;
+}
+
+.pathFeatures li {
+    font-size: 1rem;
+    color: var(--neutral-800);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+    gap: 1rem;
+    display: flex;
+}
+
+.pathFeatures li:last-child {
+    border-bottom: none;
+}
+
+.pathCta {
+    width: 100%;
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.pathCard[data-path="student"] .pathCta {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.pathCard[data-path="instructor"] .pathCta {
+    background: #FF6B35;
+    color: white;
+}
+
+.pathCard[data-path="instructor"] .checkIcon {
+    color: #FF6B35;
+}
+
+/* HOW IT WORKS */
+.howItWorks {
+    padding: 5rem 0;
+    background: var(--light-gray);
+}
+
+.sectionTitle {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: var(--primary-blue);
+}
+
+.stepsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+}
+
+.stepCard {
+    background: #f9fbff;
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
+    text-align: left;
+    border: 1px solid #eef2f7;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stepCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.stepNumber {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1.2rem;
+}
+
+.stepCard h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    color: #111;
+}
+
+.stepCard p {
+    color: #666;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+
+/* WHY LEARNIT */
+.whyLearnIt {
+    padding: 5rem 0;
+    background: #fff;
+}
+
+.whyGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.whyItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.checkIcon {
+    color: var(--primary-blue);
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+
+/* TESTIMONIALS */
+.testimonials {
+    padding: 5rem 0;
+    background: var(--light-gray);
+}
+
+.testimonialGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.testimonialCard {
+    background: #f9fbff;
+    border-radius: 14px;
+    padding: 2.5rem;
+    border: 1px solid #eef2f7;
+}
+
+.testimonialCard p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 1.25rem;
+}
+
+.author {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+}
+
+
+/* FINAL CTA */
+.finalCta {
+    padding: 6rem 0;
+    background: linear-gradient(135deg,
+            var(--primary-blue) 0%,
+            #1f4ed8 100%);
+    text-align: center;
+    color: white;
+}
+
+.finalCta h2 {
+    font-size: 2.6rem;
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+}
+
+.finalCta p {
+    font-size: 1.2rem;
+    max-width: 650px;
+    margin: 0 auto 2.75rem auto;
+    opacity: 0.95;
+    line-height: 1.6;
+}
+
+/* FOOTER */
+.footer {
+    background: var(--primary-blue);
+    color: var(--white);
+    margin-top: 10rem;
+    margin-bottom: 0;
+    padding: 4rem 0 2rem 0;
+}
+
+.footerGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+.footerBrand {
+    color: var(--white);
+    font-size: 1.6rem;
+    margin-bottom: 0.75rem;
+}
+
+.footerDescription {
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 320px;
+    opacity: 0.9;
+}
+
+.footer h4 {
+    color: white;
+    font-size: 1.05rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer ul li {
+    margin-bottom: 0.6rem;
+}
+
+.footer ul li a {
+    color: #d1d5db;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.footer ul li a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.footerBottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    padding-bottom: 0.5rem;
+}
+
+
+/* MOBILE */
+@media (max-width: 600px) {
+    .stepsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .stepCard {
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
+
+    .navLinks {
+        position: fixed;
+        top: 80px;
+        right: -100%;
+        width: 70%;
+        max-width: 300px;
+        height: calc(100vh - 80px);
+        background: #ffffff;
+        flex-direction: column;
+        gap: 0;
+        padding: 2rem 0;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        align-items: flex-start;
+    }
+
+    .navLinksOpen {
+        right: 0;
+    }
+
+    .navLinks a {
+        width: 100%;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .navLinks a:hover {
+        background: #f8f8f8;
+    }
+
+    .heroSection {
+        min-height: 500px;
+    }
+
+    .heroImageContainer {
+        height: 100%;
+    }
+
+    .heroContent {
+        padding: 2rem 1.5rem;
+    }
+
+    .heroTitle {
+        font-size: 2rem;
+    }
+
+    .heroContent p {
+        font-size: 1.1rem;
+    }
+
+    .whyGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .footerGrid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .footerDescription {
+        margin: 0 auto;
+    }
+
+    .finalCta h2 {
+        font-size: 2.1rem;
+    }
+
+    .finalCta p {
+        font-size: 1.1rem;
+    }
+
+    .pathSelection::before {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .stepsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .testimonialGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .testimonialCard {
+        text-align: center;
+    }
+
+    .paths {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .pathCard {
+        padding: 2rem;
+    }
+
+    .pathCard h3 {
+        font-size: 1.5rem;
+    }
+
+    .pathIntro {
+        font-size: 1rem;
+        padding: 0 1rem;
+    }
+}

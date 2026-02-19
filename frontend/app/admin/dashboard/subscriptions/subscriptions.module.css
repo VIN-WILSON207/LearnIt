@@ -1,0 +1,325 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    gap: 20px;
+}
+
+.header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.header p {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+}
+
+.header button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+}
+
+/* Form Styles */
+.formCard {
+    margin-bottom: 40px;
+    padding: 30px;
+}
+
+.formCard h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formGroup label {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.formGroup input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.formGroup input:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.formActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.formActions button {
+    padding: 12px 24px;
+    font-size: 14px;
+}
+
+/* Plans Grid */
+.plansGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.loadingCard,
+.emptyCard {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.loadingCard p,
+.emptyCard h3 {
+    color: #666;
+    margin: 0;
+}
+
+.emptyCard p {
+    color: #999;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.planCard {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.planCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.planHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+}
+
+.planHeader h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.planDuration {
+    font-size: 13px;
+    color: #999;
+    margin-top: 4px;
+}
+
+.planPrice {
+    text-align: right;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.currency {
+    font-size: 16px;
+    font-weight: 600;
+    color: #007bff;
+    margin-top: 2px;
+}
+
+.amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.planMeta {
+    flex-grow: 1;
+    padding: 16px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.planMeta p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.planMeta strong {
+    color: #333;
+}
+
+.planActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.planActions button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Stats Card */
+.statsCard {
+    padding: 30px;
+}
+
+.statsCard h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.stat {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.statLabel {
+    display: block;
+    font-size: 13px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.statValue {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #007bff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header h1 {
+        font-size: 24px;
+    }
+
+    .header button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .formActions {
+        flex-direction: column;
+    }
+
+    .formActions button {
+        width: 100%;
+    }
+
+    .plansGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .planCard {
+        padding: 16px;
+    }
+
+    .planHeader {
+        flex-direction: column;
+    }
+
+    .planPrice {
+        justify-content: flex-start;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .planActions {
+        flex-direction: column;
+    }
+
+    .planActions button {
+        width: 100%;
+    }
+}
