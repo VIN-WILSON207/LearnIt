@@ -392,6 +392,27 @@ export default function AdminDashboard() {
                   ))
                 )}
               </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ color: 'var(--text-secondary)' }}>
+            {courseReviewRequests && courseReviewRequests.length > 0
+              ? 'No requests match this filter.'
+              : 'No open course review requests.'}
+          </div>
+        )}
+      </Card>
+
+      {/* Advanced Filter Bar */}
+      <div className={styles.contentFilterBar}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {(['pending', 'published', 'all'] as const).map(s => (
+            <div
+              key={s}
+              className={`${styles.statusTab} ${contentStatusFilter === s ? styles.active : ''}`}
+              onClick={() => setContentStatusFilter(s)}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
             </div>
           </div>
         )}

@@ -1,43 +1,49 @@
-import { mockEnrollments } from '@/lib/mockData';
 import { NextRequest, NextResponse } from 'next/server';
+
+const BACKEND_BASE = process.env.BACKEND_BASE || 'http://localhost:4000';
 
 export async function GET(request: NextRequest) {
   try {
-    const studentId = request.nextUrl.searchParams.get('studentId');
-    
-    if (studentId) {
-      const enrollments = mockEnrollments.filter(
-        (e) => e.studentId === studentId
-      );
-      return NextResponse.json(enrollments, { status: 200 });
-    }
+    const searchParams = request.nextUrl.searchParams;
+    const studentId = searchParams.get('studentId');
+    const instructorId = searchParams.get('instructorId');
+    const url = studentId
+      ? new URL(`/api/enrollments/user/${studentId}`, BACKEND_BASE)
+      : instructorId
+        ? new URL(`/api/enrollments/instructor/${instructorId}`, BACKEND_BASE)
+        : new URL('/api/enrollments', BACKEND_BASE);
 
-    return NextResponse.json(mockEnrollments, { status: 200 });
+    const backendRes = await fetch(url.toString(), {
+      headers: {
+        Authorization: request.headers.get('authorization') || '',
+      },
+    });
+
+    const data = await backendRes.json();
+    return NextResponse.json(data, { status: backendRes.status });
   } catch (error) {
     console.error('Error fetching enrollments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const enrollment = await request.json();
-    
-    const newEnrollment = {
-      id: String(mockEnrollments.length + 1),
-      ...enrollment,
-    };
+    const body = await request.json();
 
-    mockEnrollments.push(newEnrollment);
-    return NextResponse.json(newEnrollment, { status: 201 });
+    const backendRes = await fetch(`${BACKEND_BASE}/api/enrollments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: request.headers.get('authorization') || '',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await backendRes.json();
+    return NextResponse.json(data, { status: backendRes.status });
   } catch (error) {
     console.error('Error creating enrollment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

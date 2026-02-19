@@ -13,6 +13,12 @@ enum Role {
   ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
 enum TicketStatus {
   OPEN
   CLOSED
@@ -24,10 +30,13 @@ model User {
   email         String   @unique
   password      String
   role          Role
+  status        UserStatus @default(ACTIVE)
   levelId       String?
   createdAt     DateTime @default(now())
 
   level         Level?   @relation(fields: [levelId], references: [id])
+  subject       Subject? @relation(fields: [subjectId], references: [id])
+  subjectId     String?
   courses       Course[] @relation("InstructorCourses")
   enrollments   Enrollment[]
   quizAttempts  QuizAttempt[]
@@ -36,7 +45,8 @@ model User {
   certificates  Certificate[]
   forumPosts    ForumPost[]
   forumComments ForumComment[]
-  tickets       SupportTicket[]
+  supportMessages SupportMessage[]
+  supportResponses SupportResponse[] @relation("AdminResponses")
 }
 
 model Level {
@@ -54,6 +64,7 @@ model Subject {
   levelId String
   level   Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
   courses Course[]
+  users   User[]
 }
 
 model Course {
@@ -160,6 +171,8 @@ model Plan {
   name     String   @unique
   price    Float
   duration Int
+  description String?
+  features String[]
 
   subscriptions Subscription[]
 }
@@ -213,13 +226,34 @@ model ForumComment {
   user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model SupportTicket {
+model SupportMessage {
   id        String   @id @default(uuid())
   userId    String
   subject   String
   message   String
   status    TicketStatus @default(OPEN)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses SupportResponse[]
+}
+
+model SupportResponse {
+  id        String   @id @default(uuid())
+  messageId String
+  adminId   String
+  response  String
+  createdAt DateTime @default(now())
+
+  message SupportMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  admin   User           @relation(fields: [adminId], references: [id], name: "AdminResponses", onDelete: Cascade)
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  type  String @default("string") // string, boolean, number, json
+  updatedAt DateTime @updatedAt
 }

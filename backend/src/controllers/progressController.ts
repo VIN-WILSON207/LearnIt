@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { generateDynamicCertificateUrl } from '../utils/certificateUtils';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string };
@@ -22,6 +23,41 @@ export const updateProgress = async (req: AuthRequest, res: Response) => {
             update: { percent, updatedAt: new Date() },
             create: { studentId, courseId, percent },
         });
+
+        if (percent >= 100) {
+            const existingCert = await prisma.certificate.findFirst({
+                where: {
+                    studentId: studentId,
+                    courseId,
+                },
+            });
+
+            if (!existingCert) {
+                const student = await prisma.user.findUnique({ where: { id: studentId } });
+                const course = await prisma.course.findUnique({ where: { id: courseId } });
+
+                if (student && course) {
+                    const dateString = new Date().toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+
+                    const fileUrl = generateDynamicCertificateUrl(
+                        student.name,
+                        course.title,
+                        dateString
+                    );
+
+                    await prisma.certificate.create({
+                        data: {
+                            studentId: studentId,
+                            courseId,
+                            issueDate: new Date(),
+                            fileUrl,
+                        },
+                    });
+                }
+            }
+        }
 
         res.json(progress);
     } catch (error) {

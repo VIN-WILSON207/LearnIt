@@ -1,0 +1,94 @@
+.privacySection {
+    padding: 5rem 0 6rem 0;
+    background: #fff;
+}
+
+.privacyEffectiveDate {
+    text-align: center;
+    color: #666;
+    margin-top: -1.5rem;
+    margin-bottom: 2.5rem;
+    font-weight: 500;
+}
+
+.privacyCard {
+    background: #f9fbff;
+    border-radius: 18px;
+    padding: 3rem;
+    border: 1px solid #eef2f7;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
+}
+
+.privacyIntro {
+    font-size: 1.05rem;
+    color: #444;
+    line-height: 1.8;
+    margin-bottom: 1.25rem;
+}
+
+.privacyList {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    margin-top: 2rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.privacyList li {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.75rem 2rem;
+    border: 1px solid #eef2f7;
+}
+
+.privacyList h3 {
+    margin: 0 0 0.75rem 0;
+    color: var(--primary-blue);
+    font-size: 1.35rem;
+}
+
+.privacyList p {
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+}
+
+.privacyList ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0.75rem 0 0.5rem 0;
+    color: #555;
+    line-height: 1.7;
+}
+
+.privacyList ul li {
+    padding: 0.2rem 0;
+    border: none;
+    background: transparent;
+}
+
+.privacySubsection {
+    margin-top: 1.2rem;
+}
+
+.privacySubsection h4 {
+    margin: 0 0 0.6rem 0;
+    color: #111;
+    font-size: 1.05rem;
+}
+
+.privacyNote {
+    margin-top: 0.75rem;
+    font-weight: 600;
+    color: #1f4ed8;
+}
+
+@media (max-width: 768px) {
+    .privacyCard {
+        padding: 2rem 1.5rem;
+    }
+
+    .privacyList {
+        padding-left: 1rem;
+    }
+}

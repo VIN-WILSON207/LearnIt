@@ -20,7 +20,9 @@ export default function Login() {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      router.push(`/${user.role.toLowerCase()}/dashboard`);
+      if (user && user.role) {
+        router.push(`/${user.role.toLowerCase()}/dashboard`);
+      }
     }
   }, [user, router]);
 

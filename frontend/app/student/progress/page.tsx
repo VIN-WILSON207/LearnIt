@@ -63,11 +63,12 @@ export default function ProgressPage() {
   return (
     <ProtectedRoute requiredRole="student">
       <Navbar />
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1>Your Learning Progress</h1>
-          <p>Track your course completion and learning achievements</p>
-        </div>
+      <StudentLayout active="progress">
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <h1>Your Learning Progress</h1>
+            <p>Track your course completion and learning achievements</p>
+          </div>
 
         {/* Progress Summary */}
         <div className={styles.summaryGrid}>
@@ -153,10 +154,27 @@ export default function ProgressPage() {
                         {new Date(enrollment.enrolledAt).toLocaleDateString()}
                       </span>
                     </div>
-                  </div>
-                </Card>
-              );
-            })}
+
+                    <div className={styles.progressStats}>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Progress</span>
+                        <span className={styles.value}>{percentage}%</span>
+                      </div>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Hours</span>
+                        <span className={styles.value}>
+                          {enrollment.hoursCompleted || 0} / {enrollment.totalHours || 0}
+                        </span>
+                      </div>
+                      <div className={styles.stat}>
+                        <span className={styles.label}>Enrolled</span>
+                        <span className={styles.value}>{enrollment.enrolledDate}</span>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -182,7 +200,8 @@ export default function ProgressPage() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
+      </StudentLayout>
     </ProtectedRoute>
   );
 }

@@ -6,4 +6,7 @@ const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 router.post('/generate', auth_1.authenticate, certificateController_1.generateCertificate);
 router.get('/', auth_1.authenticate, certificateController_1.getCertificates);
+router.get('/all', auth_1.authenticate, (0, auth_1.authorize)('ADMIN'), certificateController_1.getAllCertificates);
+router.post('/admin/issue', auth_1.authenticate, (0, auth_1.authorize)('ADMIN'), certificateController_1.adminIssueCertificate);
+router.get('/:id/download', auth_1.authenticate, certificateController_1.downloadCertificate);
 exports.default = router;

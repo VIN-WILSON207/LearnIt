@@ -7,7 +7,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
 import { FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  hideMenu?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ hideMenu = false }) => {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -27,27 +31,24 @@ export const Navbar: React.FC = () => {
     router.push('/');
   };
 
+
   if (!user) return null;
 
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
-        <Link href={`/${user.role}/dashboard`} className={styles.logo}>
+        <Link href={`/${user.role.toLowerCase()}/dashboard`} className={styles.logo}>
           LearnIt
         </Link>
-        <span className={styles.tagline}>Smart Learning, Better Results</span>
 
-        <button
-          className={styles.menuToggle}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? <FiX /> : <FiMenu />}
-        </button>
-
-        <div className={`${styles.menu} ${isMenuOpen ? styles.open : ''}`}>
-          <Link href={`/${user.role}/dashboard`} className={styles.navItem}>
-            Dashboard
-          </Link>
+        {!hideMenu && !isStudent && !isInstructor && (
+          <button
+            className={styles.menuToggle}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <FiX /> : <FiMenu />}
+          </button>
+        )}
 
           {user.role === 'student' && (
             <>

@@ -11,6 +11,7 @@ import { BackendCourse } from '@/types';
 import styles from './page.module.css';
 import { FiStar, FiClock, FiUsers, FiBook } from 'react-icons/fi';
 import { Button } from '@/components/Button';
+import { StudentLayout } from '@/components/StudentLayout';
 
 export default function CoursesPage() {
   const { user } = useAuth();
@@ -46,11 +47,12 @@ export default function CoursesPage() {
   return (
     <ProtectedRoute requiredRole="student">
       <Navbar />
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1>Available Courses</h1>
-          <p>Explore and enroll in new courses</p>
-        </div>
+      <StudentLayout active="courses">
+        <div className={styles.container}>
+          <div className={styles.header}>
+            <h1>Available Courses</h1>
+            <p>Explore and enroll in new courses</p>
+          </div>
 
         {/* Filters */}
         <div className={styles.filters}>
@@ -66,10 +68,18 @@ export default function CoursesPage() {
               className={`${styles.filterBtn} ${filter === cat ? styles.active : ''}`}
               onClick={() => setFilter(cat as string)}
             >
-              {cat}
+              All Courses
             </button>
-          ))}
-        </div>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                className={`${styles.filterBtn} ${filter === cat ? styles.active : ''}`}
+                onClick={() => setFilter(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
         {isLoading && (
           <div style={{ textAlign: 'center', padding: '3rem' }}>
@@ -146,7 +156,7 @@ export default function CoursesPage() {
             </Card>
           ))}
         </div>
-      </div>
+      </StudentLayout>
     </ProtectedRoute>
   );
 }

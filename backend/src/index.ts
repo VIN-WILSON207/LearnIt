@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import courseRoutes from './routes/courseRoutes';
 import subscriptionRoutes from './routes/subscriptionRoutes';
@@ -41,7 +43,11 @@ const port = process.env.PORT || 4000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files
+
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -61,9 +67,9 @@ app.get('/', (req: Request, res: Response) => {
     res.send('LEARNIT API Running');
 });
 
-// Global Error Handler
+// Error Handler
 app.use((err: any, req: Request, res: Response, next: Function) => {
-    console.error("DEBUG: Global Error Handler Caught:", err);
+    console.error("Error:", err);
     res.status(500).json({ error: err.message || 'Internal Server Error', details: err });
 });
 

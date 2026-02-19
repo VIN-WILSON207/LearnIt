@@ -1,14 +1,20 @@
-import { mockAnalytics } from '@/lib/mockData';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+const BACKEND_BASE = process.env.BACKEND_BASE || 'http://localhost:4000';
+
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json(mockAnalytics, { status: 200 });
+    const backendRes = await fetch(`${BACKEND_BASE}/api/analytics`, {
+      method: 'GET',
+      headers: {
+        Authorization: request.headers.get('authorization') || '',
+      },
+    });
+
+    const data = await backendRes.json();
+    return NextResponse.json(data, { status: backendRes.status });
   } catch (error) {
-    console.error('Error fetching analytics:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error fetching analytics proxy:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

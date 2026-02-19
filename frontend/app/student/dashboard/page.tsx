@@ -1,6 +1,8 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
@@ -12,7 +14,11 @@ import { getCertificates } from '@/lib/api/certificates';
 import { getCourseById } from '@/lib/api/courses';
 import { Enrollment, Certificate, Progress, BackendCourse } from '@/types';
 import styles from './page.module.css';
-import { FiAward, FiClock, FiBook } from 'react-icons/fi';
+import { FiAward, FiClock, FiBook, FiMessageCircle } from 'react-icons/fi';
+import { StudentLayout } from '@/components/StudentLayout';
+
+const TABS = ['Overview', 'Courses', 'Progress', 'Certificates', 'Subscriptions', 'Community', 'Support'] as const;
+type Tab = (typeof TABS)[number];
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -131,25 +137,29 @@ export default function StudentDashboard() {
               <div className={styles.statIcon}>
                 <FiBook />
               </div>
-              <div>
-                <div className={styles.statLabel}>Courses Completed</div>
-                <div className={styles.statValue}>{completedCourses}</div>
+              <div className={styles.headerActions}>
+                <Button variant="outline" onClick={handleExportPdf}>
+                  Export PDF
+                </Button>
+                <Button variant="primary" onClick={() => setActiveTab('Progress')}>
+                  Go to Progress
+                </Button>
               </div>
             </div>
-          </Card>
 
-          <Card className={styles.statCard}>
-            <div className={styles.statContent}>
-              <div className={styles.statIcon}>
-                <FiAward />
-              </div>
+            {/* Overview Tab */}
+            {activeTab === 'Overview' && (
               <div>
-                <div className={styles.statLabel}>Certificates Earned</div>
-                <div className={styles.statValue}>{certificates.length}</div>
-              </div>
-            </div>
-          </Card>
-        </div>
+                <div className={styles.statsGrid}>
+                  <Card className={styles.statCard}>
+                    <div className={styles.statContent}>
+                      <div className={styles.statIcon}><FiClock /></div>
+                      <div>
+                        <div className={styles.statLabel}>Learning Hours</div>
+                        <div className={styles.statValue}>{totalHours}</div>
+                      </div>
+                    </div>
+                  </Card>
 
         {/* In Progress Courses */}
         <div className={styles.section}>
@@ -214,14 +224,129 @@ export default function StudentDashboard() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline">View Certificate</Button>
                   </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
+
+                  <Card className={styles.statCard}>
+                    <div className={styles.statContent}>
+                      <div className={styles.statIcon}><FiBook /></div>
+                      <div>
+                        <div className={styles.statLabel}>Courses Completed</div>
+                        <div className={styles.statValue}>{completedCourses}</div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* Certificates Tab */}
+            {activeTab === 'Certificates' && (
+              <div className={styles.section}>
+                <h2>Your Certificates</h2>
+                <div className={styles.certificatesList}>
+                  {certificates.map((cert) => (
+                    <Card key={cert.id} className={styles.certCard}>
+                      <div className={styles.certContent}>
+                        <FiAward className={styles.certIcon} />
+                        <div>
+                          <h3>{cert.courseName || 'Course Certificate'}</h3>
+                          <p>Issued: {cert.issueDate}</p>
+                          <p className={styles.certNumber}>Cert #: {cert.certificateNumber}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDownloadCertificate(cert.id)}
+                      >
+                        Download Certificate
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Subscriptions Tab */}
+            {activeTab === 'Subscriptions' && (
+              <div className={styles.section}>
+                <h2>Subscriptions</h2>
+                <Card className={styles.tableCard}>
+                  <div style={{ padding: '40px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '1.1rem', color: '#4B5563', marginBottom: '1.5rem' }}>
+                      Upgrade your plan to unlock more features and resources!
+                    </p>
+                    <Button
+                      variant="primary"
+                      onClick={() => router.push('/student/subscription')}
+                      style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
+                    >
+                      View Subscription Plans
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Community Tab */}
+            {activeTab === 'Community' && (
+              <div className={styles.section}>
+                <div className={styles.communityHeader}>
+                  <div>
+                    <h2>Community Forum</h2>
+                    <p className={styles.communityDesc}>Connect with peers and instructors across all courses</p>
+                  </div>
+                  <Button variant="primary" onClick={() => window.open('/student/forum', '_blank')}>
+                    <FiMessageCircle style={{ marginRight: '0.5rem' }} />
+                    Full Forum
+                  </Button>
+                </div>
+
+                {threads && threads.length === 0 ? (
+                  <Card>
+                    <p>No recent discussions. Start a conversation in the <strong>Full Forum</strong>!</p>
+                  </Card>
+                ) : (
+                  <div className={styles.recentThreads}>
+                    {threads && threads.slice(0, 5).map((t) => (
+                      <Card key={t.id} className={styles.threadPreview}>
+                        <div className={styles.threadPreviewHeader}>
+                          <h4>{t.title}</h4>
+                          <span className={styles.threadAuthor}>by {t.author}</span>
+                        </div>
+                        <p className={styles.threadPreviewContent}>{t.content?.substring(0, 100)}...</p>
+                        <div className={styles.threadPreviewFooter}>
+                          <small className={styles.threadDate}>{t.createdDate || 'Recently'}</small>
+                          <Button size="small" onClick={() => window.open(`/forum/${t.id}`, '_blank')}>View</Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Support Tab */}
+            {activeTab === 'Support' && (
+              <div className={styles.section}>
+                <h2>Need Help?</h2>
+                <Card className={styles.tableCard}>
+                  <div style={{ padding: '40px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '16px', color: '#666', marginBottom: '20px' }}>
+                      Facing issues or have questions? Our support team is here to help you.
+                    </p>
+                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '20px' }}>
+                      Send us a message and we'll get back to you as soon as possible.
+                    </p>
+                    <Button onClick={() => window.open('/support', '_blank')} style={{ padding: '10px 30px', fontSize: '16px' }}>
+                      Contact Support Team
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+        </div>
+      </StudentLayout>
     </ProtectedRoute>
   );
 }

@@ -1,0 +1,190 @@
+.container {
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 20px;
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mainDiscussion {
+    padding: 30px;
+    border-left: 4px solid #6366f1;
+    background: #f8f9fa;
+}
+
+.discussionMeta h1 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    color: #1a1a1a;
+}
+
+.courseMeta {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.authorInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 15px 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.author {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.role {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role.student {
+    background: #dbeafe;
+    color: #0c4a6e;
+}
+
+.role.instructor {
+    background: #fcd34d;
+    color: #78350f;
+}
+
+.role.admin {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.date {
+    margin-left: auto;
+    color: #999;
+    font-size: 13px;
+}
+
+.replyDate {
+    color: #999;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.discussionContent {
+    margin-top: 20px;
+    line-height: 1.6;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.repliesSection {
+    margin-top: 30px;
+}
+
+.repliesSection h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+}
+
+.replyForm {
+    padding: 20px;
+    background: #ffffff;
+    margin-bottom: 20px;
+    border-left: 4px solid #10b981;
+}
+
+.replyForm h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #1a1a1a;
+}
+
+.textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 12px;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.repliesList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reply {
+    padding: 20px;
+    background: #ffffff;
+    border-left: 4px solid #8b5cf6;
+}
+
+.replyAuthor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.replyAuthor strong {
+    color: #1a1a1a;
+    font-size: 14px;
+}
+
+.replyContent {
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .container {
+        margin: 60px auto 20px;
+        padding: 10px;
+    }
+
+    .mainDiscussion {
+        padding: 20px;
+    }
+
+    .discussionMeta h1 {
+        font-size: 22px;
+    }
+
+    .authorInfo {
+        flex-wrap: wrap;
+    }
+
+    .date {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .replyForm {
+        padding: 15px;
+    }
+
+    .textarea {
+        font-size: 16px;
+        /* Prevents auto-zoom on iOS */
+    }
+}

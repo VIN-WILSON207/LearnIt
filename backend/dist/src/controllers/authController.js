@@ -3,14 +3,66 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.resetPassword = exports.forgotPassword = exports.login = exports.register = exports.getRegistrationConfig = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const nodemailer_1 = __importDefault(require("nodemailer"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_change_me';
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+const FRONTEND_BASE = process.env.FRONTEND_BASE || 'http://localhost:3000';
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : undefined;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+let transporter = null;
+if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS) {
+    transporter = nodemailer_1.default.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS,
+        },
+    });
+}
+else {
+    transporter = null;
+}
+const getRegistrationConfig = async (req, res) => {
+    try {
+        const levels = await prisma_1.default.level.findMany({
+            include: {
+                subjects: true,
+            },
+        });
+        const allowedSubjectsByLevel = {
+            'Ordinary Level': ['Computer Science'],
+            'Advanced Level': ['Computer Science', 'ICT'],
+        };
+        const filteredLevels = levels.map((level) => {
+            const allowedSubjects = allowedSubjectsByLevel[level.name] || [];
+            const filtered = level.subjects.filter((subject) => allowedSubjects.includes(subject.name));
+            const uniqueByName = new Map(filtered.map((subject) => [subject.name, subject]));
+            return {
+                ...level,
+                subjects: Array.from(uniqueByName.values()),
+            };
+        });
+        res.status(200).json(filteredLevels);
+    }
+    catch (error) {
+        console.error('Failed to fetch registration config:', error);
+        res.status(500).json({ error: 'Failed to fetch registration configuration' });
+    }
+};
+exports.getRegistrationConfig = getRegistrationConfig;
 const register = async (req, res) => {
     try {
-        const { name, email, password, role, levelId } = req.body;
+        const { name, email, password, role, levelId, subjectId } = req.body;
         if (!email || !password || !name) {
             res.status(400).json({ error: 'Missing required fields' });
             return;
@@ -21,17 +73,81 @@ const register = async (req, res) => {
             return;
         }
         const hashedPassword = await bcryptjs_1.default.hash(password, 10);
+        let resolvedLevelId;
+        let resolvedSubjectId;
+        if ((role || 'STUDENT') === 'STUDENT') {
+            if (!levelId) {
+                res.status(400).json({ error: 'Level is required for students' });
+                return;
+            }
+            const level = await prisma_1.default.level.findUnique({
+                where: { id: levelId },
+                include: { subjects: true },
+            });
+            if (!level) {
+                res.status(400).json({ error: 'Invalid level selected' });
+                return;
+            }
+            const allowedSubjectsByLevel = {
+                'Ordinary Level': ['Computer Science'],
+                'Advanced Level': ['Computer Science', 'ICT'],
+            };
+            const allowedNames = allowedSubjectsByLevel[level.name] || [];
+            const allowedSubjects = level.subjects.filter((subject) => allowedNames.includes(subject.name));
+            if (allowedSubjects.length === 0) {
+                res.status(400).json({ error: 'No valid subjects available for the selected level' });
+                return;
+            }
+            if (level.name === 'Ordinary Level') {
+                resolvedLevelId = level.id;
+                resolvedSubjectId = allowedSubjects[0]?.id;
+            }
+            else {
+                const requestedSubject = allowedSubjects.find((subject) => subject.id === subjectId)
+                    || allowedSubjects.find((subject) => subject.name === 'Computer Science');
+                if (!requestedSubject) {
+                    res.status(400).json({ error: 'Invalid subject selected for the chosen level' });
+                    return;
+                }
+                resolvedLevelId = level.id;
+                resolvedSubjectId = requestedSubject.id;
+            }
+        }
         const user = await prisma_1.default.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: role || 'STUDENT',
-                levelId,
+                level: resolvedLevelId ? { connect: { id: resolvedLevelId } } : undefined,
+                subject: resolvedSubjectId ? { connect: { id: resolvedSubjectId } } : undefined,
             },
+            include: {
+                level: true,
+                subject: true,
+                subscriptions: {
+                    where: { isActive: true },
+                    take: 1
+                }
+            }
         });
         const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-        res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+        const subscription = user.subscriptions[0] || null;
+        res.status(201).json({
+            message: 'Successful registration',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                levelId: user.levelId,
+                level: user.level,
+                subjectId: user.subjectId,
+                subject: user.subject,
+                subscription,
+            },
+        });
     }
     catch (error) {
         console.error(error);
@@ -42,7 +158,16 @@ exports.register = register;
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await prisma_1.default.user.findUnique({ where: { email } });
+        const user = await prisma_1.default.user.findUnique({
+            where: { email },
+            include: {
+                level: true,
+                subscriptions: {
+                    where: { isActive: true },
+                    take: 1
+                }
+            }
+        });
         if (!user) {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
@@ -53,10 +178,97 @@ const login = async (req, res) => {
             return;
         }
         const token = jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-        res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+        const subscription = user.subscriptions[0] || null;
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                levelId: user.levelId,
+                level: user.level,
+                subscription,
+            },
+        });
     }
     catch (error) {
+        console.error('Login failed:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
 exports.login = login;
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+        const user = await prisma_1.default.user.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            return res.status(200).json({ message: 'If email exists, a reset link has been sent' });
+        }
+        const resetToken = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+        const resetLink = `${FRONTEND_BASE}/reset-password?token=${resetToken}`;
+        if (transporter) {
+            const fromAddress = SMTP_USER || 'no-reply@learnit.local';
+            await transporter.sendMail({
+                from: fromAddress,
+                to: email,
+                subject: 'Reset your LearnIt password',
+                html: `<p>You requested a password reset. Click the link below to reset your password (valid for 1 hour):</p>
+                       <p><a href="${resetLink}">Reset Password</a></p>
+                       <p>If you did not request this, please ignore this email.</p>`,
+            });
+            res.status(200).json({ message: 'Password reset email sent' });
+        }
+        else {
+            console.log(`Reset token for ${email}: ${resetToken}`);
+            res.status(200).json({
+                message: 'Password reset token generated (development mode)',
+                resetToken,
+                resetLink,
+            });
+        }
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to process forgot password' });
+    }
+};
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res) => {
+    try {
+        const { resetToken, newPassword } = req.body;
+        if (!resetToken || !newPassword) {
+            return res.status(400).json({ error: 'Reset token and new password are required' });
+        }
+        let decoded;
+        try {
+            decoded = jsonwebtoken_1.default.verify(resetToken, JWT_SECRET);
+        }
+        catch (err) {
+            return res.status(401).json({ error: 'Invalid or expired reset token' });
+        }
+        const user = await prisma_1.default.user.findUnique({
+            where: { id: decoded.userId }
+        });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+        await prisma_1.default.user.update({
+            where: { id: user.id },
+            data: { password: hashedPassword }
+        });
+        res.status(200).json({ message: 'Password reset successfully' });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+};
+exports.resetPassword = resetPassword;

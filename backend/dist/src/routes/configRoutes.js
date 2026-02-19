@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const configController_1 = require("../controllers/configController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/', configController_1.getAppConfig);
+router.post('/settings', auth_1.authenticate, (0, auth_1.authorize)('ADMIN'), configController_1.updateSettings);
+router.get('/health', configController_1.getHealthStatus);
+router.get('/levels', configController_1.getLevels);
+router.get('/subjects', configController_1.getSubjects);
+router.get('/subjects/:levelId', configController_1.getSubjectsByLevel);
+exports.default = router;

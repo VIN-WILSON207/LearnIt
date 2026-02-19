@@ -45,7 +45,7 @@ export default function Home() {
           </h1>
           <p>
             Structured, exam-focused learning for O/L & A/L students. Track your progress, pass mandatory quizzes,
-            and earn your certificate — all aligned with the Sri Lankan syllabus.
+            and earn your certificate, all aligned with the Sri Lankan syllabus.
           </p>
         </div>
 
@@ -313,7 +313,7 @@ export default function Home() {
         </div>
 
         <div className={styles.footerBottom}>
-          <p>© {new Date().getFullYear()} LearnIT Education Platform. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} LearnIT. All rights reserved.</p>
         </div>
       </footer >
     </div >

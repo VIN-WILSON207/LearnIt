@@ -145,6 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     tokenManager.clearToken();
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
   };
 
   return (
